@@ -1,0 +1,65 @@
+name: Mobile CI
+on:
+  push:
+    branches: [main, develop]
+    paths: ["apps/mobile/**", ".github/workflows/mobile.yml"]
+  pull_request:
+    paths: ["apps/mobile/**", ".github/workflows/mobile.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    working-directory: apps/mobile
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect Flutter project
+        id: detect
+        working-directory: .
+        run: echo "present=$([ -f apps/mobile/pubspec.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.detect.outputs.present == 'true'
+        uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - if: steps.detect.outputs.present == 'true'
+        uses: subosito/flutter-action@v2
+        with: {channel: stable, cache: true}
+      - if: steps.detect.outputs.present == 'true'
+        run: flutter pub get
+      - name: Format
+        if: steps.detect.outputs.present == 'true'
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyze (lint)
+        if: steps.detect.outputs.present == 'true'
+        run: flutter analyze --fatal-infos
+      - name: Test with coverage
+        if: steps.detect.outputs.present == 'true'
+        run: flutter test --coverage
+      - name: Enforce coverage >= 80%
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          total=$(awk -F: '/^LF:/{lf+=$2} /^LH:/{lh+=$2} END{if(lf==0){print 100}else{printf "%.1f", lh*100/lf}}' coverage/lcov.info)
+          echo "Line coverage: ${total}%"
+          awk -v t="$total" 'BEGIN{exit (t>=80)?0:1}'
+      - name: Kotlin unit tests
+        if: steps.detect.outputs.present == 'true' && hashFiles('apps/mobile/android/gradlew') != ''
+        working-directory: apps/mobile/android
+        run: ./gradlew testDebugUnitTest --no-daemon
+      - name: Build APK
+        if: steps.detect.outputs.present == 'true'
+        run: flutter build apk --debug
+      - if: steps.detect.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opennetiq-debug-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/*.apk
+          retention-days: 14
+      - name: Skipped
+        if: steps.detect.outputs.present != 'true'
+        working-directory: .
+        run: echo "apps/mobile/pubspec.yaml not present yet — skipping (Phase 0)."

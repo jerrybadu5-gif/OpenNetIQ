@@ -1,0 +1,17 @@
+name: Feature request
+description: Propose a new capability
+labels: [feature]
+body:
+  - type: textarea
+    id: problem
+    attributes: {label: "Problem / user need", description: "Who needs this (regulator, operator, researcher, field engineer, consumer) and why?"}
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes: {label: "Proposed solution"}
+  - type: textarea
+    id: standards
+    attributes: {label: "Relevant standards", description: "ITU-T / 3GPP / ETSI references"}
+  - type: textarea
+    id: acceptance
+    attributes: {label: "Acceptance criteria"}

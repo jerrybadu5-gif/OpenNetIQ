@@ -1,0 +1,12 @@
+- {name: bug, color: d73a4a, description: Something isn't working}
+- {name: feature, color: 0e8a16, description: New capability}
+- {name: enhancement, color: a2eeef, description: Improvement to existing capability}
+- {name: tech-debt, color: fbca04, description: Refactoring, dependencies, cleanup}
+- {name: security, color: b60205, description: Security or privacy}
+- {name: documentation, color: 0075ca, description: Docs, ADRs, methodology}
+- {name: telecom, color: 5319e7, description: Radio, KPIs, standards, measurement accuracy}
+- {name: backend, color: 1d76db, description: FastAPI, PostGIS, workers}
+- {name: mobile, color: 006b75, description: Flutter / Kotlin app}
+- {name: gis, color: 0b6e4f, description: Maps, coverage, spatial exports}
+- {name: devops, color: 666666, description: CI/CD, infrastructure}
+- {name: good first issue, color: 7057ff, description: Good for newcomers}

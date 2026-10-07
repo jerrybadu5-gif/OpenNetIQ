@@ -1,0 +1,6 @@
+# Replace @OWNER with the maintainer's GitHub handle (bootstrap.sh does this automatically).
+*                 @OWNER
+/apps/mobile/     @OWNER
+/backend/         @OWNER
+/database/        @OWNER
+/docs/standards/  @OWNER

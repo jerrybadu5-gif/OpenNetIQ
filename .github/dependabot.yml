@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, security]
+  - package-ecosystem: pub
+    directory: /apps/mobile
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, mobile]
+  - package-ecosystem: gradle
+    directory: /apps/mobile/android
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, mobile]
+  - package-ecosystem: pip
+    directory: /backend/api
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, backend]
+  - package-ecosystem: docker
+    directory: /backend/api
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, backend]

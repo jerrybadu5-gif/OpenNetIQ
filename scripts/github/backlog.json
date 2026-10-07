@@ -1,0 +1,453 @@
+{
+  "labels": [
+    {
+      "name": "bug",
+      "color": "d73a4a",
+      "description": "Something isn't working"
+    },
+    {
+      "name": "feature",
+      "color": "0e8a16",
+      "description": "New capability"
+    },
+    {
+      "name": "enhancement",
+      "color": "a2eeef",
+      "description": "Improvement to existing capability"
+    },
+    {
+      "name": "tech-debt",
+      "color": "fbca04",
+      "description": "Refactoring, dependencies, cleanup"
+    },
+    {
+      "name": "security",
+      "color": "b60205",
+      "description": "Security or privacy"
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca",
+      "description": "Docs, ADRs, methodology"
+    },
+    {
+      "name": "telecom",
+      "color": "5319e7",
+      "description": "Radio, KPIs, standards, measurement accuracy"
+    },
+    {
+      "name": "backend",
+      "color": "1d76db",
+      "description": "FastAPI, PostGIS, workers"
+    },
+    {
+      "name": "mobile",
+      "color": "006b75",
+      "description": "Flutter / Kotlin app"
+    },
+    {
+      "name": "gis",
+      "color": "0b6e4f",
+      "description": "Maps, coverage, spatial exports"
+    },
+    {
+      "name": "devops",
+      "color": "666666",
+      "description": "CI/CD, infrastructure"
+    },
+    {
+      "name": "good first issue",
+      "color": "7057ff",
+      "description": "Good for newcomers"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "M0 – Foundation",
+      "description": "Repo, CI/CD, ADRs, methodology, Flutter skeleton. See docs/ROADMAP.md Phase 0."
+    },
+    {
+      "title": "M1 – MVP",
+      "description": "Local-first Android app: signal monitor, GPS, speed test, latency, drive-test sessions, local storage, CSV/GeoJSON export. Release v0.1.0."
+    },
+    {
+      "title": "M2 – Coverage & Drive Test",
+      "description": "FastAPI + PostGIS backend, upload/sync, H3 coverage maps, drive-test replay, KML/GeoPackage. Release v0.2.0."
+    },
+    {
+      "title": "M3 – QoE & Analytics",
+      "description": "Web/video/voice tests, UDP loss/jitter, QoE scoring, DuckDB analytics, dashboards. Release v0.3.0."
+    },
+    {
+      "title": "M4 – Crowdsourcing & Benchmarking",
+      "description": "Identity, crowdsourcing, privacy engineering, operator rankings, regulator reports. Release v1.0.0."
+    },
+    {
+      "title": "M5 – Intelligence",
+      "description": "Anomaly detection, coverage prediction, complaint correlation, automated insights."
+    }
+  ],
+  "issues": [
+    {
+      "milestone": "M0 – Foundation",
+      "title": "[M0] Configure branches and branch protection",
+      "labels": [
+        "devops"
+      ],
+      "body": "Create `develop`; protect `main` and `develop` (PR required, 1 approval, status checks: Mobile CI, Backend CI, CodeQL, Security scan).\n\n### Acceptance criteria\n- [ ] `develop` is default branch\n- [ ] Direct pushes to `main` blocked\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M0 – Foundation",
+      "title": "[M0] Flutter app skeleton with Clean Architecture",
+      "labels": [
+        "mobile",
+        "feature"
+      ],
+      "body": "`flutter create --org org.opennetiq --platforms android apps/mobile`; add riverpod, riverpod_generator, drift, go_router, flutter_map, fl_chart, uuid; folders core/platform/data/domain/features; flavors dev/prod; minSdk 29, targetSdk 35.\n\n### Acceptance criteria\n- [ ] `flutter build apk --flavor dev` green in CI\n- [ ] very_good_analysis or flutter_lints strict enabled\n- [ ] Sample unit + widget test pass\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M0 – Foundation",
+      "title": "[M0] Pigeon platform-channel contract for measurement layer",
+      "labels": [
+        "mobile",
+        "telecom"
+      ],
+      "body": "Define `pigeons/measurement_api.dart`: RadioHostApi, LocationHostApi, SpeedTestHostApi, LatencyHostApi, DriveTestHostApi + event streams. Generate Kotlin/Dart.\n\n### Acceptance criteria\n- [ ] Generated code compiles\n- [ ] Contract documented in apps/mobile/API.md\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M0 – Foundation",
+      "title": "[M0] UUIDv7 + UTC time utilities (Dart & Kotlin)",
+      "labels": [
+        "mobile"
+      ],
+      "body": "Shared helpers for UUIDv7 generation and ISO 8601 UTC formatting.\n\n### Acceptance criteria\n- [ ] Monotonic UUIDv7 unit-tested\n- [ ] Timestamps always end in `Z`\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M0 – Foundation",
+      "title": "[M0] Data dictionary for CSV/GeoJSON exports",
+      "labels": [
+        "documentation",
+        "telecom"
+      ],
+      "body": "`docs/standards/DATA-DICTIONARY.md`: every column, unit, type, source API, nullability.\n\n### Acceptance criteria\n- [ ] All schema_v1 columns documented\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] RadioCollector: LTE & NR serving/neighbour cells",
+      "labels": [
+        "telecom",
+        "mobile",
+        "feature"
+      ],
+      "body": "Kotlin `RadioCollector` using TelephonyCallback (31+) / PhoneStateListener (29–30) and `requestCellInfoUpdate`. Map CellInfoLte/CellInfoNr per methodology §2–3 (RSRP, RSRQ, SINR, RSSI, CQI, TA, PCI, TAC, ECI→eNB, NCI→gNB, EARFCN/NR-ARFCN, band).\n\n### Acceptance criteria\n- [ ] UNAVAILABLE→null, out-of-range→null+quality_flag\n- [ ] Mapper unit tests incl. eNB/gNB derivation\n- [ ] Stale cells (>2 s) flagged\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] RadioCollector: GSM & WCDMA support",
+      "labels": [
+        "telecom",
+        "mobile",
+        "feature"
+      ],
+      "body": "Map CellInfoGsm (RSSI, BER, TA, LAC, CID, ARFCN, BSIC) and CellInfoWcdma (RSCP, Ec/No, PSC, UARFCN).\n\n### Acceptance criteria\n- [ ] Unit tests for both RATs\n- [ ] Live screen shows 2G/3G correctly\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] 5G NSA / SA detection",
+      "labels": [
+        "telecom",
+        "mobile"
+      ],
+      "body": "Use TelephonyDisplayInfo.overrideNetworkType (API 30+) and ServiceState to classify NR_NSA, NR_NSA_MMWAVE, NR_SA, LTE_CA.\n\n### Acceptance criteria\n- [ ] network_type enum per methodology\n- [ ] Graceful fallback on API 29 documented\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] LocationCollector (AOSP GPS_PROVIDER)",
+      "labels": [
+        "gis",
+        "mobile",
+        "feature"
+      ],
+      "body": "1 Hz GNSS: lat, lon, altitude, speed, bearing, h/v accuracy, satellites, fix age; gps_quality classification (ADR-006).\n\n### Acceptance criteria\n- [ ] No Google Play Services dependency\n- [ ] Fix-age and accuracy guards unit-tested\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Live Signal Dashboard screen",
+      "labels": [
+        "mobile",
+        "feature"
+      ],
+      "body": "Serving cell card (RAT, operator, MCC/MNC, band, PCI, TAC, Cell/eNB/gNB), RSRP/RSRQ/SINR gauges with methodology colour classes, neighbour list, 60 s time-series chart.\n\n### Acceptance criteria\n- [ ] Updates at 1 Hz\n- [ ] Widget tests\n- [ ] Screenshots in PR\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Drift local database (schema_v1)",
+      "labels": [
+        "mobile",
+        "feature"
+      ],
+      "body": "Implement database/mobile/schema_v1.sql in Drift with DAOs and repositories; WAL; migration strategy.\n\n### Acceptance criteria\n- [ ] Schema matches reference DDL\n- [ ] Repository tests with in-memory DB\n- [ ] Insert ≥ 50 samples/s sustained\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Drive-test foreground service & session engine",
+      "labels": [
+        "mobile",
+        "telecom",
+        "feature"
+      ],
+      "body": "Foreground service (location|dataSync), interval 1/2/5 s, lifecycle created→recording→paused→completed|aborted, crash-safe per-sample commits, gap detection.\n\n### Acceptance criteria\n- [ ] 2 h screen-off run ≤ 1 % missing samples\n- [ ] Battery ≤ 15 %/h\n- [ ] Survives app swipe-away\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Drive-test UI: live map + session management",
+      "labels": [
+        "mobile",
+        "gis",
+        "feature"
+      ],
+      "body": "flutter_map/OSM live track coloured by RSRP, start/pause/stop, session metadata form, sessions list & detail with summary stats.\n\n### Acceptance criteria\n- [ ] Track renders 10 k points smoothly\n- [ ] Session delete removes all child rows\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Speed-test engine (HTTP multi-connection)",
+      "labels": [
+        "telecom",
+        "mobile",
+        "feature"
+      ],
+      "body": "Kotlin OkHttp engine per methodology §5 (4 streams, 10 s, 2 s ramp-up excluded, 100 ms sampling, mean/median/P10/P90/peak, DNS & TCP connect time). Radio snapshot linked.\n\n### Acceptance criteria\n- [ ] KPI math unit-tested\n- [ ] Within ±10 % of reference (n ≥ 30)\n- [ ] Cancel-safe\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Speed-test server container (ADR-007)",
+      "labels": [
+        "devops",
+        "telecom"
+      ],
+      "body": "`infra/test-server`: LibreSpeed-compatible endpoints (garbage/empty/getIP) + ping endpoint, Docker image, deployment notes; M-Lab ndt7 fallback in client.\n\n### Acceptance criteria\n- [ ] docker compose up serves endpoints\n- [ ] Documented sizing (≥ 1 Gbps uplink)\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Latency engine (ICMP/TCP/DNS) with jitter & loss",
+      "labels": [
+        "telecom",
+        "mobile",
+        "feature"
+      ],
+      "body": "Per methodology §6: 20 probes, 200 ms; min/max/mean/median/P95, jitter (RFC 3393 IPDV), loss %. Raw RTTs stored.\n\n### Acceptance criteria\n- [ ] Jitter/percentile math unit-tested\n- [ ] Works without root\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Speed test & latency UI",
+      "labels": [
+        "mobile",
+        "feature"
+      ],
+      "body": "Test screen with live throughput curve, results card, history; server selection in settings.\n\n### Acceptance criteria\n- [ ] Widget tests\n- [ ] Results persisted with methodology_version\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] CSV and GeoJSON export",
+      "labels": [
+        "gis",
+        "mobile",
+        "feature"
+      ],
+      "body": "Streaming writers: CSV (one row per sample, data dictionary columns) and GeoJSON RFC 7946 (Points + session LineString). Share via SAF/share sheet.\n\n### Acceptance criteria\n- [ ] Opens cleanly in Excel and QGIS\n- [ ] 100 k-row export without OOM\n- [ ] Golden-file tests\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Consent, permissions & privacy controls",
+      "labels": [
+        "security",
+        "mobile"
+      ],
+      "body": "Onboarding consent (logged in consent_log), runtime permission flow incl. background location rationale, delete all data, no IMEI/IMSI/MSISDN.\n\n### Acceptance criteria\n- [ ] Consent required before any collection\n- [ ] Privacy checklist in PR passes\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Field validation campaign (3 routes)",
+      "labels": [
+        "telecom"
+      ],
+      "body": "Urban, suburban, highway routes vs reference device/app; protocol in tests/field-validation.\n\n### Acceptance criteria\n- [ ] RSRP/RSRQ median abs diff ≤ 2 dB\n- [ ] Report committed to docs/validation/\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M1 – MVP",
+      "title": "[M1] Release v0.1.0 (signed APK)",
+      "labels": [
+        "devops"
+      ],
+      "body": "Release workflow: signed APK via GitHub Secrets keystore, checksums, release notes.\n\n### Acceptance criteria\n- [ ] Release published\n- [ ] SHA-256 checksums attached\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] FastAPI service skeleton with /health and /metrics",
+      "labels": [
+        "backend",
+        "feature"
+      ],
+      "body": "backend/api: FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, OpenAPI 3.1, Prometheus metrics, Dockerfile.\n\n### Acceptance criteria\n- [ ] CI green incl. coverage ≥ 80 %\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] PostGIS schema & Alembic migration 0001",
+      "labels": [
+        "backend",
+        "gis"
+      ],
+      "body": "Port database/postgis/001_init.sql; monthly partition job.\n\n### Acceptance criteria\n- [ ] Migration up/down tested\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] Idempotent batch upload API & mobile sync queue",
+      "labels": [
+        "backend",
+        "mobile",
+        "feature"
+      ],
+      "body": "POST /v1/sessions, /v1/samples:batch (gzip NDJSON), idempotent by measurement_id; mobile queue with backoff.\n\n### Acceptance criteria\n- [ ] Re-upload creates zero duplicates\n- [ ] 10 k samples/s ingest\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] H3 coverage aggregation worker",
+      "labels": [
+        "gis",
+        "backend"
+      ],
+      "body": "Refresh coverage_h3_r9 / r8; per operator × RAT metrics.\n\n### Acceptance criteria\n- [ ] Campaign map renders < 2 s\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] Vector tiles (Martin) + Flutter Web portal v1",
+      "labels": [
+        "gis",
+        "feature"
+      ],
+      "body": "Coverage layers, drive-test replay, filters by operator/RAT/metric.\n\n### Acceptance criteria\n- [ ] Portal deployed via Compose\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] KML / GeoPackage / Shapefile exports",
+      "labels": [
+        "gis"
+      ],
+      "body": "GDAL-based export worker + mobile KML.\n\n### Acceptance criteria\n- [ ] Opens in Google Earth & QGIS\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M2 – Coverage & Drive Test",
+      "title": "[M2] Docker Compose stack + observability",
+      "labels": [
+        "devops"
+      ],
+      "body": "api, postgis, redis, martin, prometheus, grafana; images on GHCR scanned by Trivy.\n\n### Acceptance criteria\n- [ ] One-command local stack\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M3 – QoE & Analytics",
+      "title": "[M3] Web browsing QoE test",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "DNS/TCP/TLS/TTFB/DOM/full-load for configurable URLs.\n\n### Acceptance criteria\n- [ ] Methodology doc published\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M3 – QoE & Analytics",
+      "title": "[M3] Video streaming QoE test",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "Media3 DASH: start-up delay, stalls, bitrate, resolution, failures.\n\n### Acceptance criteria\n- [ ] Methodology doc published\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M3 – QoE & Analytics",
+      "title": "[M3] Voice test & E-model MOS estimate",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "Call setup time/success/drop; MOS via G.107 E-model.\n\n### Acceptance criteria\n- [ ] Documented device limitations\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M3 – QoE & Analytics",
+      "title": "[M3] UDP loss/jitter test & server",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "UDP echo server + client; loss, jitter, reordering.\n\n### Acceptance criteria\n- [ ] RFC 3550 jitter verified\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M3 – QoE & Analytics",
+      "title": "[M3] QoE index & DuckDB analytics library",
+      "labels": [
+        "telecom",
+        "backend"
+      ],
+      "body": "Versioned composite QoE index; KPI library over Parquet.\n\n### Acceptance criteria\n- [ ] Validated on ≥ 100 labelled sessions\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M4 – Crowdsourcing & Benchmarking",
+      "title": "[M4] Keycloak OIDC, roles & multi-tenancy",
+      "labels": [
+        "security",
+        "backend"
+      ],
+      "body": "Roles public/field_engineer/operator/regulator_analyst/admin; organisation_id scoping.\n\n### Acceptance criteria\n- [ ] Pen-test checklist passed\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M4 – Crowdsourcing & Benchmarking",
+      "title": "[M4] Opt-in crowdsourcing with consent ledger",
+      "labels": [
+        "mobile",
+        "feature"
+      ],
+      "body": "Battery-aware passive sampling; Wi-Fi/charging upload options.\n\n### Acceptance criteria\n- [ ] DPIA completed\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M4 – Crowdsourcing & Benchmarking",
+      "title": "[M4] Privacy engineering: k-anonymity & DSAR",
+      "labels": [
+        "security"
+      ],
+      "body": "k ≥ 5 on published bins, fuzzing, deletion/export requests.\n\n### Acceptance criteria\n- [ ] Privacy review sign-off\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M4 – Crowdsourcing & Benchmarking",
+      "title": "[M4] Operator benchmarking & rankings",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "Controlled comparisons with confidence intervals and minimum samples.\n\n### Acceptance criteria\n- [ ] Methodology published\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M4 – Crowdsourcing & Benchmarking",
+      "title": "[M4] Regulator QoS compliance report generator",
+      "labels": [
+        "telecom",
+        "feature"
+      ],
+      "body": "Configurable licence KPI thresholds; PDF/DOCX quarterly reports reproducible from raw data.\n\n### Acceptance criteria\n- [ ] One-command reproducible report\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M5 – Intelligence",
+      "title": "[M5] KPI anomaly detection",
+      "labels": [
+        "feature"
+      ],
+      "body": "Seasonal baselines per cell/H3 bin with alerting.\n\n### Acceptance criteria\n- [ ] Precision/recall on labelled incidents reported\n\nRef: docs/ROADMAP.md"
+    },
+    {
+      "milestone": "M5 – Intelligence",
+      "title": "[M5] Coverage prediction model",
+      "labels": [
+        "gis",
+        "feature"
+      ],
+      "body": "Kriging baseline → ML with DEM/OSM buildings.\n\n### Acceptance criteria\n- [ ] Error vs held-out drive tests reported\n\nRef: docs/ROADMAP.md"
+    }
+  ]
+}
