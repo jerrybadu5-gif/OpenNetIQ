@@ -54,9 +54,11 @@ Regulatory coverage thresholds are configured per jurisdiction in Phase 4 (e.g.,
 6. Test invalid if: radio RAT changes mid-test (flagged, not dropped), < 1 MB transferred, or server error.
 
 ## 6. Latency (method `lat-1.0`)
-- ICMP: 20 echo requests, 200 ms interval, 56-byte payload, 2 s timeout.
-- TCP: 20 connects to server port 443, RTT = SYN→SYN/ACK as seen by connect().
+- ICMP: 20 echo requests via Android `/system/bin/ping` (no root), 200 ms interval, 56-byte payload, 2 s timeout.
+- TCP: 20 connects to the resolved target address (default port 443), RTT = SYN→SYN/ACK as seen by connect(), 2 s timeout.
+- DNS: 20 hostname lookups, 200 ms interval; each successful lookup's elapsed time is one RTT sample.
 - KPIs: `min, max, mean, median, p95` (nearest-rank), `jitter_ms = mean(|RTTᵢ − RTTᵢ₋₁|)` over successful consecutive probes (IPDV, RFC 3393), `packet_loss_pct = lost / sent × 100`.
+- Results retain one raw RTT per probe in send order; failed probes are `NULL`. Summary RTT fields and jitter are `NULL` when no samples or fewer than two adjacent successful probes are available, respectively.
 
 ## 7. References
 ITU-T E.800, G.1010, G.1020, P.863, Y.1540 · 3GPP TS 36.214, 36.133, 38.215, 38.133, 23.203, 32.450 · ETSI EG 202 057 · RFC 3393, 3550, 7946 · GSMA network benchmarking guidance.
