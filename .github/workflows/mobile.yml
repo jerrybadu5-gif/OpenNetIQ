@@ -49,7 +49,7 @@ jobs:
       - name: Kotlin unit tests
         if: steps.detect.outputs.present == 'true' && hashFiles('apps/mobile/android/gradlew') != ''
         working-directory: apps/mobile/android
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: ./gradlew testDevDebugUnitTest -Ptarget=lib/main_dev.dart --no-daemon
       - name: Build APK
         if: steps.detect.outputs.present == 'true'
         run: flutter build apk --debug --flavor dev -t lib/main_dev.dart
