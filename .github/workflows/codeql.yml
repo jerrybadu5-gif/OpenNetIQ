@@ -19,7 +19,7 @@ jobs:
         # Add `python` (Phase 2) and `java-kotlin` (once apps/mobile/android exists) here.
         language: [actions]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v4
         with: {languages: "${{ matrix.language }}"}
       - uses: github/codeql-action/analyze@v4
