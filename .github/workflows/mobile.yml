@@ -54,7 +54,7 @@ jobs:
         if: steps.detect.outputs.present == 'true'
         run: flutter build apk --debug
       - if: steps.detect.outputs.present == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: opennetiq-debug-apk
           path: apps/mobile/build/app/outputs/flutter-apk/*.apk
