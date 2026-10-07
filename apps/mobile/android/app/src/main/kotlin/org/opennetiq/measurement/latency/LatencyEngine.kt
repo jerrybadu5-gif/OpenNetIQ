@@ -88,7 +88,7 @@ class LatencyEngine {
         ).redirectErrorStream(true).start()
 
         try {
-            if (!process.waitFor(PROBE_TIMEOUT_MS + 500, TimeUnit.MILLISECONDS)) {
+            if (!process.waitFor((PROBE_TIMEOUT_MS + 500).toLong(), TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly()
                 return null
             }
