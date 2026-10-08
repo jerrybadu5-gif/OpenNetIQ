@@ -210,7 +210,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 
 ## Publication Policy (GitHub)
 
-- Development happens **locally** in `Documents\OpenNetIQ` (git commits locally on `develop` / `feature/*`).
+- Development happens **locally** in `Documents\Developer\OpenNetIQ` (git commits locally on `develop` / `feature/*`).
 - Code is pushed to GitHub **only when a phase is complete**: all epics done, exit criteria met, tests passing, field-tested.
 - The push is done **by the maintainer from VS Code** (Source Control → Push). Claude never pushes, creates remote repos, or opens remote PRs/issues unless explicitly asked.
 - Phase gate checklist before push:

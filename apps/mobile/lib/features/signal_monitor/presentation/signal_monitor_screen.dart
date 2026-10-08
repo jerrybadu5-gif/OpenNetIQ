@@ -1,0 +1,201 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
+import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
+import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/application/signal_history.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/cell_card.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/level_trend_chart.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/neighbour_list.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/network_header.dart';
+
+/// Live Signal Dashboard (issue #15): serving cell(s), neighbours and a
+/// one-minute level trend, refreshed every sampling interval.
+class SignalMonitorScreen extends ConsumerWidget {
+  const SignalMonitorScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(radioPermissionsProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Signal monitor')),
+      body: switch (permissions) {
+        AsyncData(:final value) when !value.hasTelephony => const Center(
+          child: StatusMessage(
+            icon: Icons.signal_cellular_off,
+            title: 'No cellular radio',
+            message: 'This device cannot measure mobile networks.',
+          ),
+        ),
+        AsyncData(:final value) when !value.canMonitor => PermissionPrompt(
+          onRequest: () =>
+              ref.read(radioPermissionsProvider.notifier).request(),
+        ),
+        AsyncData(:final value) => LiveSignalView(permissions: value),
+        AsyncError(:final error) => Center(
+          child: StatusMessage(
+            icon: Icons.error_outline,
+            title: 'Permissions unavailable',
+            message: '$error',
+          ),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
+    );
+  }
+}
+
+class LiveSignalView extends ConsumerWidget {
+  const LiveSignalView({required this.permissions, super.key});
+
+  final RadioPermissions permissions;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(radioSnapshotProvider);
+    // Watched here (not in _SnapshotView) so the trend records from the
+    // first snapshot onwards.
+    final history = ref.watch(signalHistoryProvider);
+    return switch (snapshot) {
+      AsyncData(:final value) => _SnapshotView(
+        snapshot: value,
+        permissions: permissions,
+        history: history,
+      ),
+      AsyncError(:final error) => Center(
+        child: StatusMessage(
+          icon: Icons.error_outline,
+          title:
+              error is RadioException &&
+                  error.code == RadioException.permissionDenied
+              ? 'Permission required'
+              : 'Radio data unavailable',
+          message: error is RadioException ? error.message : '$error',
+        ),
+      ),
+      _ => const Center(
+        child: StatusMessage(
+          icon: Icons.cell_tower,
+          title: 'Waiting for radio data',
+          message: 'Reading serving and neighbour cells...',
+          busy: true,
+        ),
+      ),
+    };
+  }
+}
+
+class _SnapshotView extends StatelessWidget {
+  const _SnapshotView({
+    required this.snapshot,
+    required this.permissions,
+    required this.history,
+  });
+
+  final RadioSnapshot snapshot;
+  final RadioPermissions permissions;
+  final List<SignalPoint> history;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = snapshot.primaryCell;
+    final nrLeg = snapshot.nrLeg;
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        NetworkHeader(snapshot: snapshot, permissions: permissions),
+        if (primary == null)
+          const StatusMessage(
+            icon: Icons.signal_cellular_connected_no_internet_0_bar,
+            title: 'No serving cell',
+            message: 'The modem did not report a registered cell.',
+          )
+        else
+          CellCard(
+            cell: primary,
+            title: snapshot.networkType.isNsa ? 'LTE anchor' : 'Serving cell',
+          ),
+        if (nrLeg != null) CellCard(cell: nrLeg, title: '5G NR leg'),
+        LevelTrendChart(points: history),
+        NeighbourList(cells: snapshot.neighbourCellsExcludingNrLeg),
+      ],
+    );
+  }
+}
+
+class PermissionPrompt extends StatelessWidget {
+  const PermissionPrompt({required this.onRequest, super.key});
+
+  final VoidCallback onRequest;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.location_on_outlined, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              'Location and phone-state access needed',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Android only shares cell information with apps that have '
+              'precise location access. Phone-state access lets OpenNetIQ '
+              'detect 5G NSA. Nothing leaves this device.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRequest,
+              icon: const Icon(Icons.lock_open),
+              label: const Text('Grant access'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StatusMessage extends StatelessWidget {
+  const StatusMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.busy = false,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48),
+          const SizedBox(height: 12),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(message, textAlign: TextAlign.center),
+          if (busy) ...[
+            const SizedBox(height: 16),
+            const LinearProgressIndicator(),
+          ],
+        ],
+      ),
+    );
+  }
+}

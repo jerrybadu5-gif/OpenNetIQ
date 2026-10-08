@@ -14,5 +14,6 @@
 | [ADR-010](ADR-010-Monorepo-with-GitHub-Flow.md) | Monorepo with GitHub Flow | Accepted |
 | [ADR-011](ADR-011-Flutter-Web-for-the-portal.md) | Flutter Web for the portal | Accepted |
 | [ADR-012](ADR-012-Apache-2.0-licence-and-permissive-dependencies.md) | Apache-2.0 licence and permissive dependencies | Accepted |
+| [ADR-013](ADR-013-Typed-platform-channels-instead-of-Pigeon.md) | Typed platform channels instead of Pigeon (amends ADR-005) | Accepted |
 
 New ADRs: copy `ADR-000-template.md`, next free number, PR with label `documentation`.

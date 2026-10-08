@@ -35,15 +35,28 @@ Rules: `UNAVAILABLE` (Integer.MAX_VALUE) or out-of-range → `NULL` with `qualit
 - `network_type` enum: `GSM, GPRS, EDGE, UMTS, HSPA, HSPAP, LTE, LTE_CA, NR_NSA, NR_NSA_MMWAVE, NR_SA, UNKNOWN, NONE`.
 
 ## 4. Signal quality classes (display only, not regulatory thresholds)
-| Class | LTE RSRP (dBm) | NR SS-RSRP (dBm) | LTE SINR (dB) |
-|---|---|---|---|
-| Excellent | ≥ −80 | ≥ −80 | ≥ 20 |
-| Good | −80 … −90 | −80 … −90 | 13 … 20 |
-| Fair | −90 … −100 | −90 … −100 | 0 … 13 |
-| Poor | −100 … −110 | −100 … −110 | < 0 |
-| No/edge | < −110 | < −110 | — |
+Each RAT is classified on its main level metric. Lower bound inclusive.
+
+| Class | LTE RSRP / NR SS-RSRP (dBm) | WCDMA RSCP (dBm) | GSM RSSI (dBm) | LTE/NR SINR (dB) |
+|---|---|---|---|---|
+| Excellent | ≥ −80 | ≥ −75 | ≥ −70 | ≥ 20 |
+| Good | −90 … < −80 | −85 … < −75 | −80 … < −70 | 13 … < 20 |
+| Fair | −100 … < −90 | −95 … < −85 | −90 … < −80 | 0 … < 13 |
+| Poor | −110 … < −100 | −105 … < −95 | −100 … < −90 | < 0 |
+| No service | < −110 | < −105 | < −100 | — |
 
 Regulatory coverage thresholds are configured per jurisdiction in Phase 4 (e.g., licence condition ≥ −105 dBm outdoor).
+
+## 4a. Quality flags
+| Level | Flag | Meaning |
+|---|---|---|
+| Cell | `UNAVAILABLE` | The RAT's main level metric was not reported |
+| Cell | `OUT_OF_RANGE` | A metric was outside its valid range and stored as NULL |
+| Snapshot | `STALE` | Newest cell report older than 2 s |
+| Snapshot | `CACHED` | `requestCellInfoUpdate` failed; cached `getAllCellInfo` used |
+| Snapshot | `NO_PHONE_STATE` | READ_PHONE_STATE not granted: network type and 5G NSA not detectable |
+
+Multiple flags are sorted and joined with `|`.
 
 ## 5. Throughput (HTTP multi-connection, method `http-mc-1.0`)
 1. Resolve server hostname → record `dns_ms`. Open 4 TCP connections → record median `tcp_connect_ms`.
