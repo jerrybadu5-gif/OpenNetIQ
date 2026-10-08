@@ -4,6 +4,7 @@ import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/data/local/app_database.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/repositories/recording_service.dart';
+import 'package:opennetiq_mobile/features/recording/application/live_track.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_providers.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
@@ -69,6 +70,10 @@ void main() {
     }
     await controller().stop();
 
+    final track = container.read(liveTrackProvider);
+    expect(track, hasLength(3));
+    expect(track.where((p) => p.hasPosition), hasLength(2));
+
     final after = state();
     expect(after.phase, RecordingPhase.idle);
     expect(after.lastSessionId, sessionId);
@@ -87,6 +92,16 @@ void main() {
     expect(session.type, SessionType.drive);
     expect(session.samplingIntervalMs, 1000);
     expect(await db.select(db.devices).get(), hasLength(1));
+  });
+
+  test('a new session starts with an empty live track', () async {
+    await controller().start();
+    controller().onSnapshot(snapshotAt(0), null);
+    await controller().stop();
+    expect(container.read(liveTrackProvider), hasLength(1));
+
+    await controller().start();
+    expect(container.read(liveTrackProvider), isEmpty);
   });
 
   test('uses the chosen name, type, interval and operator', () async {

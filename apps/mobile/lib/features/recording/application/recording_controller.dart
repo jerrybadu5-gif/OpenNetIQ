@@ -7,6 +7,8 @@ import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/repositories/recording_service.dart';
 import 'package:opennetiq_mobile/domain/services/sample_gaps.dart';
+import 'package:opennetiq_mobile/domain/services/track_segments.dart';
+import 'package:opennetiq_mobile/features/recording/application/live_track.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_providers.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
 
@@ -211,6 +213,7 @@ class RecordingController extends Notifier<RecordingState> {
       );
       return;
     }
+    ref.read(liveTrackProvider.notifier).reset();
     state = RecordingState(
       phase: RecordingPhase.recording,
       options: options,
@@ -265,6 +268,9 @@ class RecordingController extends Notifier<RecordingState> {
           location: location,
         );
         state = state.copyWith(recordedSamples: state.recordedSamples + 1);
+        ref
+            .read(liveTrackProvider.notifier)
+            .add(TrackSegments.fromTick(radio, location));
         _maybeUpdateNotification(radio, location);
       } on Object catch (e) {
         state = state.copyWith(

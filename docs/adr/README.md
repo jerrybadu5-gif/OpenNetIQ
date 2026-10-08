@@ -16,5 +16,6 @@
 | [ADR-012](ADR-012-Apache-2.0-licence-and-permissive-dependencies.md) | Apache-2.0 licence and permissive dependencies | Accepted |
 | [ADR-013](ADR-013-Typed-platform-channels-instead-of-Pigeon.md) | Typed platform channels instead of Pigeon (amends ADR-005) | Accepted |
 | [ADR-014](ADR-014-Application-owned-Flutter-engine-for-background-recording.md) | Application-owned Flutter engine for background recording | Accepted |
+| [ADR-015](ADR-015-Base-map-tiles.md) | Base-map tiles for on-device maps (OSM default, configurable) | Accepted |
 
 New ADRs: copy `ADR-000-template.md`, next free number, PR with label `documentation`.

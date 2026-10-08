@@ -6,6 +6,8 @@ import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/services/sample_gaps.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
+import 'package:opennetiq_mobile/features/map/presentation/track_map.dart';
+import 'package:opennetiq_mobile/features/recording/application/live_track.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_providers.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
@@ -220,6 +222,8 @@ class DriveTestStatus extends ConsumerWidget {
       children: [
         if (!state.backgroundAvailable || error != null)
           ErrorCard(message: error ?? 'Background recording unavailable.'),
+        TrackMap(points: ref.watch(liveTrackProvider), follow: true),
+        const TrackLegend(),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),

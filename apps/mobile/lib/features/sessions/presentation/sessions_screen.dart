@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
 
@@ -31,7 +33,7 @@ class SessionsScreen extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'No sessions yet. Start recording from the Signal monitor.',
+              'No sessions yet. Start one from Drive test.',
               textAlign: TextAlign.center,
             ),
           ),
@@ -42,6 +44,7 @@ class SessionsScreen extends ConsumerWidget {
           itemBuilder: (context, index) => SessionTile(
             session: value[index],
             onDelete: () => _confirmDelete(context, ref, value[index]),
+            onTap: () => context.push(AppRoutes.sessionDetail(value[index].id)),
           ),
         ),
         AsyncError(:final error) => Center(
@@ -105,16 +108,22 @@ class SessionsScreen extends ConsumerWidget {
 }
 
 class SessionTile extends StatelessWidget {
-  const SessionTile({required this.session, required this.onDelete, super.key});
+  const SessionTile({
+    required this.session,
+    required this.onDelete,
+    this.onTap,
+    super.key,
+  });
 
   final MeasurementSession session;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final details = [
       session.type.label,
-      _statusLabel(session.status),
+      statusLabel(session.status),
       '${session.sampleCount} samples',
       if (session.distanceM != null && session.distanceM! > 0)
         '${(session.distanceM! / 1000).toStringAsFixed(2)} km',
@@ -122,12 +131,11 @@ class SessionTile extends StatelessWidget {
     ];
     return ListTile(
       leading: Icon(
-        session.status == SessionStatus.recording
-            ? Icons.fiber_manual_record
-            : Icons.route,
+        session.status.isActive ? Icons.fiber_manual_record : Icons.route,
       ),
       title: Text(session.name),
       subtitle: Text(details.join(' - ')),
+      onTap: onTap,
       trailing: IconButton(
         tooltip: 'Delete session',
         icon: const Icon(Icons.delete_outline),
@@ -136,7 +144,7 @@ class SessionTile extends StatelessWidget {
     );
   }
 
-  static String _statusLabel(SessionStatus s) => switch (s) {
+  static String statusLabel(SessionStatus s) => switch (s) {
     SessionStatus.created => 'Created',
     SessionStatus.recording => 'Recording',
     SessionStatus.paused => 'Paused',
