@@ -11,7 +11,9 @@ import 'package:opennetiq_mobile/platform/measurement_channels.dart';
 class PlatformRecordingService implements RecordingService {
   PlatformRecordingService({
     MethodChannel channel = MeasurementChannels.control,
-  }) : _channel = channel {
+  }) : this._(channel);
+
+  PlatformRecordingService._(this._channel) {
     _channel.setMethodCallHandler(_onNativeCall);
   }
 
