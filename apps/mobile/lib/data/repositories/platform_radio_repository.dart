@@ -12,8 +12,9 @@ class PlatformRadioRepository implements RadioRepository {
   const PlatformRadioRepository({
     MethodChannel control = MeasurementChannels.control,
     EventChannel radio = MeasurementChannels.radio,
-  }) : _control = control,
-       _radio = radio;
+  }) : this._(control, radio);
+
+  const PlatformRadioRepository._(this._control, this._radio);
 
   final MethodChannel _control;
   final EventChannel _radio;
