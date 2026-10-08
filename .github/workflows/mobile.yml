@@ -58,10 +58,14 @@ jobs:
                   continue
               if e.get("type") == "testStart":
                   names[e["test"]["id"]] = e["test"]["name"]
-              elif e.get("type") == "error":
-                  errors.setdefault(e["testID"], []).append(e.get("error", ""))
+              elif e.get("type") in ("error", "print"):
+                  text = e.get("error") or e.get("message") or ""
+                  errors.setdefault(e.get("testID"), []).append(text)
+          failed = {e2 for e2 in errors if any("Test failed" in x or "Expected" in x for x in errors[e2])}
           for tid, errs in errors.items():
-              msg = (names.get(tid, "?") + " :: " + " | ".join(errs))[:1500]
+              if tid not in failed:
+                  continue
+              msg = (names.get(tid, "?") + " :: " + " | ".join(errs))[:4000]
               msg = msg.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
               print(f"::error title=Failed test::{msg}")
           PY
