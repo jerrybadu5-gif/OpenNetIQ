@@ -39,10 +39,13 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "OpenNetIQ Dev")
+            // Dev builds may use a plain-HTTP speed-test server on the LAN.
+            manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         create("prod") {
             dimension = "env"
             resValue("string", "app_name", "OpenNetIQ")
+            manifestPlaceholders["usesCleartextTraffic"] = "false"
         }
     }
 
@@ -66,5 +69,8 @@ flutter {
 }
 
 dependencies {
+    // Speed-test engine (issue #19, ADR-007). Apache-2.0.
+    implementation("com.squareup.okhttp3:okhttp:5.4.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver3:5.4.0")
     testImplementation("junit:junit:4.13.2")
 }

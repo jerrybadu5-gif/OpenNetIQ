@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
@@ -144,4 +146,24 @@ class FakeRadioRepository implements RadioRepository {
     permissions = afterRequest ?? permissions;
     return permissions;
   }
+}
+
+/// Radio repository driven by the test, recording requested intervals.
+class ControlledRadioRepository implements RadioRepository {
+  final controller = StreamController<RadioSnapshot>.broadcast();
+  final intervals = <Duration>[];
+
+  @override
+  Stream<RadioSnapshot> watchSnapshots({
+    Duration interval = const Duration(seconds: 1),
+  }) {
+    intervals.add(interval);
+    return controller.stream;
+  }
+
+  @override
+  Future<RadioPermissions> getPermissions() async => grantedPermissions;
+
+  @override
+  Future<RadioPermissions> requestPermissions() async => grantedPermissions;
 }

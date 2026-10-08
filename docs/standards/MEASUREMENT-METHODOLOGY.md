@@ -68,6 +68,7 @@ Multiple flags are sorted and joined with `|`.
 3. Discard first 2 s (TCP slow-start). Remaining 80 intervals → `mean_mbps`, `median_mbps`, `p10_mbps`, `p90_mbps`; `peak_mbps` = max 1 s rolling window (burst).
 4. Upload: same with POST of random incompressible payload.
 5. Mbps = bits / 10⁶ / s (SI). Application-layer goodput (excludes TCP/IP headers).
+   Clarifications (no change to method v1.0): `mean` is time-weighted (bytes / time over the measured window); `median`, `p10`, `p90` are nearest-rank percentiles of the per-100 ms rates; `tcp_connect_ms` is the TCP handshake only (before TLS); connections use HTTP/1.1 so that 4 streams are 4 TCP connections; upload bytes are counted when handed to the socket.
 6. Test invalid if: radio RAT changes mid-test (flagged, not dropped), < 1 MB transferred, or server error.
 
 ## 6. Latency (method `lat-1.0`)

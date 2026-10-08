@@ -34,6 +34,9 @@ class FakeSampleRepository implements SampleRepository {
   Future<int> countSamples(String sessionId) async => points.length;
 
   @override
+  Future<String?> latestMeasurementId(String sessionId) async => null;
+
+  @override
   Future<String> recordSample({
     required String sessionId,
     required RadioSnapshot radio,
