@@ -1,13 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/data/local/app_database.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
-import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
-import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
-import 'package:opennetiq_mobile/domain/repositories/radio_repository.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_pipeline.dart';
@@ -19,26 +14,6 @@ import '../fixtures/db_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
 import '../fixtures/recording_fixtures.dart';
-
-/// Radio repository driven by the test, recording requested intervals.
-class ControlledRadioRepository implements RadioRepository {
-  final controller = StreamController<RadioSnapshot>.broadcast();
-  final intervals = <Duration>[];
-
-  @override
-  Stream<RadioSnapshot> watchSnapshots({
-    Duration interval = const Duration(seconds: 1),
-  }) {
-    intervals.add(interval);
-    return controller.stream;
-  }
-
-  @override
-  Future<RadioPermissions> getPermissions() async => grantedPermissions;
-
-  @override
-  Future<RadioPermissions> requestPermissions() async => grantedPermissions;
-}
 
 void main() {
   late AppDatabase db;

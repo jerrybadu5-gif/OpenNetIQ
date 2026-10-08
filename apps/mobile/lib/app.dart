@@ -9,6 +9,7 @@ import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
+import 'package:opennetiq_mobile/features/speed_test/presentation/speed_test_screen.dart';
 
 final routerProvider = Provider<GoRouter>(
   (ref) => GoRouter(
@@ -20,6 +21,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'signal',
             builder: (context, state) => const SignalMonitorScreen(),
+          ),
+          GoRoute(
+            path: 'speed',
+            builder: (context, state) => const SpeedTestScreen(),
           ),
           GoRoute(
             path: 'drive',

@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
@@ -19,11 +21,14 @@ import org.opennetiq.measurement.radio.RadioCollector
 import org.opennetiq.measurement.service.DriveTestService
 import org.opennetiq.measurement.service.DriveTestServiceEvents
 import org.opennetiq.measurement.service.RecordingNotificationArgs
+import org.opennetiq.measurement.speed.SpeedTestConfig
+import org.opennetiq.measurement.speed.SpeedTestEngine
+import org.opennetiq.measurement.speed.SpeedTestResult
 
 /**
  * Native side of the measurement platform channels.
  * Contracts: docs/features/signal-monitor/API.md, docs/features/location/API.md,
- * docs/features/drive-test/API.md (ADR-013, ADR-014).
+ * docs/features/drive-test/API.md, docs/features/speed-test/API.md (ADR-013, ADR-014).
  * Lives as long as the application-owned engine; the activity is optional and
  * only needed for permission dialogs.
  * Never exposes IMEI, IMSI, ICCID, MSISDN or other subscriber identifiers.
@@ -39,6 +44,9 @@ class MeasurementBridge(
     private val controlChannel = MethodChannel(messenger, CONTROL_CHANNEL)
     private val radioChannel = EventChannel(messenger, RADIO_CHANNEL)
     private val locationChannel = EventChannel(messenger, LOCATION_CHANNEL)
+    private val speedChannel = EventChannel(messenger, SPEED_CHANNEL)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var speedEngine: SpeedTestEngine? = null
     private var activity: Activity? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
 
@@ -57,8 +65,55 @@ class MeasurementBridge(
         }
     }
 
+    /**
+     * Speed test (issue #19): listening starts one test, events are
+     * `phase`, `progress` and a final `result`; cancelling the subscription
+     * cancels the test (nothing is emitted afterwards).
+     */
+    private val speedStreamHandler = object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+            val config = try {
+                SpeedTestConfig.fromChannel(arguments)
+            } catch (e: IllegalArgumentException) {
+                events.error("INVALID_CONFIG", e.message ?: "Invalid speed-test configuration", null)
+                events.endOfStream()
+                return
+            }
+            speedEngine?.cancel()
+            val engine = SpeedTestEngine(config)
+            speedEngine = engine
+            fun emit(event: Map<String, Any?>) {
+                mainHandler.post { if (speedEngine === engine) events.success(event) }
+            }
+            val listener = object : SpeedTestEngine.Listener {
+                override fun onPhase(phase: String) {
+                    emit(mapOf("type" to "phase", "phase" to phase))
+                }
+
+                override fun onProgress(phase: String, elapsedMs: Long, mbps: Double) {
+                    emit(mapOf("type" to "progress", "phase" to phase, "elapsed_ms" to elapsedMs, "mbps" to mbps))
+                }
+            }
+            Thread({
+                val result = engine.run(listener)
+                mainHandler.post {
+                    if (speedEngine !== engine) return@post
+                    if (result.status != SpeedTestResult.CANCELLED) events.success(result.toMap())
+                    events.endOfStream()
+                    speedEngine = null
+                }
+            }, "onq-speed-test").apply { isDaemon = true }.start()
+        }
+
+        override fun onCancel(arguments: Any?) {
+            speedEngine?.cancel()
+            speedEngine = null
+        }
+    }
+
     init {
         controlChannel.setMethodCallHandler(this)
+        speedChannel.setStreamHandler(speedStreamHandler)
         radioChannel.setStreamHandler(this)
         locationChannel.setStreamHandler(locationStreamHandler)
         DriveTestServiceEvents.listener = this
@@ -143,6 +198,9 @@ class MeasurementBridge(
         controlChannel.setMethodCallHandler(null)
         radioChannel.setStreamHandler(null)
         locationChannel.setStreamHandler(null)
+        speedChannel.setStreamHandler(null)
+        speedEngine?.cancel()
+        speedEngine = null
         if (DriveTestServiceEvents.listener === this) DriveTestServiceEvents.listener = null
         pendingPermissionResult?.error("CANCELLED", "Bridge disposed", null)
         pendingPermissionResult = null
@@ -254,6 +312,7 @@ class MeasurementBridge(
         const val CONTROL_CHANNEL = "org.opennetiq/measurement"
         const val RADIO_CHANNEL = "org.opennetiq/radio"
         const val LOCATION_CHANNEL = "org.opennetiq/location"
+        const val SPEED_CHANNEL = "org.opennetiq/speed"
         private const val PERMISSION_REQUEST_CODE = 0x4E51 // "NQ"
         private const val NOTIFICATION_REQUEST_CODE = 0x4E53
         private const val DEFAULT_INTERVAL_MS = 1_000L

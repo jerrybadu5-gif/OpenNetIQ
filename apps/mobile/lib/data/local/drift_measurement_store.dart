@@ -219,6 +219,16 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
   }
 
   @override
+  Future<String?> latestMeasurementId(String sessionId) async {
+    final query = _db.selectOnly(_db.samples)
+      ..addColumns([_db.samples.measurementId])
+      ..where(_db.samples.sessionId.equals(sessionId))
+      ..orderBy([OrderingTerm.desc(_db.samples.timestamp)])
+      ..limit(1);
+    return (await query.getSingleOrNull())?.read(_db.samples.measurementId);
+  }
+
+  @override
   Future<List<DateTime>> sampleTimestamps(String sessionId) async {
     final query = _db.selectOnly(_db.samples)
       ..addColumns([_db.samples.timestamp])

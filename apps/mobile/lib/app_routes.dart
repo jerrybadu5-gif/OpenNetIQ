@@ -4,6 +4,7 @@ abstract final class AppRoutes {
   static const String signal = '/signal';
   static const String sessions = '/sessions';
   static const String drive = '/drive';
+  static const String speed = '/speed';
 
   static String sessionDetail(String id) => '/sessions/$id';
 }

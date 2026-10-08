@@ -51,6 +51,9 @@ abstract interface class SampleRepository {
 
   Future<int> countSamples(String sessionId);
 
+  /// Newest sample of a session (links a speed test run during a drive).
+  Future<String?> latestMeasurementId(String sessionId);
+
   /// Sample timestamps of a session, oldest first (gap detection).
   Future<List<DateTime>> sampleTimestamps(String sessionId);
 

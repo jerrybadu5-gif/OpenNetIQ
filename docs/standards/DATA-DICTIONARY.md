@@ -108,7 +108,7 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 | Column | Type | Unit | Null | Source | Description |
 |---|---|---|---|---|---|
 | test_id | TEXT PK | UUIDv7 | no | App | |
-| session_id | TEXT FK | UUIDv7 | yes | App | → sessions; NULL for stand-alone test |
+| session_id | TEXT FK | UUIDv7 | yes | App | → sessions: the open drive session, or a `single_test` session holding the start snapshot; NULL only when no radio data was available |
 | measurement_id | TEXT FK | UUIDv7 | yes | App | Radio/GPS snapshot at start |
 | timestamp | TEXT | UTC ISO 8601 | no | App | Test start |
 | method | TEXT | – | no | Engine | `http-mc-1.0` or `ndt7` |
