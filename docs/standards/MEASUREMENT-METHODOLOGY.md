@@ -9,6 +9,8 @@
 | Radio refresh | `TelephonyManager.requestCellInfoUpdate()` per tick; cell data older than 2 s flagged `STALE` |
 | GNSS | `GPS_PROVIDER`, 1 Hz; fix age > 2 s or accuracy > 50 m → `gps_quality = POOR` |
 | Clock | Device UTC; each sample stores `timestamp` (sample time) and `radio_timestamp` (CellInfo timestamp) |
+| Gaps | Consecutive samples more than 1.5 x interval apart, after removing user pauses, form a gap; missing ticks = round(step / interval) - 1. Completeness = recorded / (recorded + missing) |
+| Interrupted sessions | A session open when the process died is closed as `aborted`, `ended_at` = last sample |
 
 ## 2. Radio metrics (raw, as reported by Android)
 | Metric | RAT | Unit | Valid range (3GPP reporting) | Source API |

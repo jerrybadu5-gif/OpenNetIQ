@@ -30,14 +30,16 @@ class RecordButton extends ConsumerWidget {
           ),
         );
       case RecordingPhase.recording:
+      case RecordingPhase.paused:
         final count = switch (ref.watch(activeSessionProvider)) {
           AsyncData(:final value) => value?.sampleCount ?? 0,
           _ => 0,
         };
+        final label = state.isPaused ? 'PAUSED $count' : 'REC $count';
         return TextButton.icon(
           onPressed: controller.stop,
           icon: const Icon(Icons.stop_circle, color: recordColor),
-          label: Text('REC $count', style: const TextStyle(color: recordColor)),
+          label: Text(label, style: const TextStyle(color: recordColor)),
         );
     }
   }

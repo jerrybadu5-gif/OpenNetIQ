@@ -7,7 +7,7 @@ On-device database for measurement sessions. Closes #16.
 - SQLite file `opennetiq.sqlite` in the app's private storage, WAL journal, foreign keys on. App backup is disabled (`allowBackup="false"`) so measurements never leave the phone via cloud backup.
 - Every radio tick while recording = one `samples` row (geotagged with the GPS fix of the same tick, if any) + one `cell_observations` row per visible cell, written in one transaction together with the session's sample count and distance.
 - Device registered once with a random UUIDv7 (`app_settings.device_id`), never IMEI.
-- **Recording (foreground)**: Signal monitor -> record button in the app bar -> `REC n` counter -> tap to stop. Leaving the screen is blocked while recording. Background recording comes with the foreground service (#17).
+- **Recording (foreground)**: Signal monitor -> record button in the app bar -> `REC n` counter -> tap to stop. Recording continues in the background via the drive-test service (#17, `docs/features/drive-test/`).
 - **Sessions screen** (Home -> Sessions): list with samples, distance, duration; delete one or all (privacy control).
 
 ## Data quality on samples

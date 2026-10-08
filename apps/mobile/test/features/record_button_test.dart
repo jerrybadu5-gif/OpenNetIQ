@@ -20,7 +20,9 @@ class FakeRecordingController extends RecordingController {
   RecordingState build() => initial;
 
   @override
-  Future<void> start({SessionType type = SessionType.drive}) async {
+  Future<void> start([
+    RecordingOptions options = const RecordingOptions(),
+  ]) async {
     starts++;
     state = const RecordingState(
       phase: RecordingPhase.recording,
@@ -89,6 +91,19 @@ void main() {
 
     expect(fake.stops, 1);
     expect(find.byTooltip('Start recording'), findsOneWidget);
+  });
+
+  testWidgets('paused shows the paused counter and stops', (tester) async {
+    final fake = await pumpButton(
+      tester,
+      const RecordingState(phase: RecordingPhase.paused, sessionId: 's1'),
+    );
+    await tester.pump();
+    expect(find.text('PAUSED 42'), findsOneWidget);
+
+    await tester.tap(find.text('PAUSED 42'));
+    await tester.pump();
+    expect(fake.stops, 1);
   });
 
   testWidgets('busy phases show progress', (tester) async {

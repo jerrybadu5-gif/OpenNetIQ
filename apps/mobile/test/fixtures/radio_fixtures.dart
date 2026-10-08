@@ -1,3 +1,4 @@
+import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
@@ -78,11 +79,20 @@ RadioSnapshot snapshot({
   String networkType = 'LTE',
   List<Map<String, Object?>>? cells,
   String? qualityFlag,
+  String timestamp = '2026-10-08T01:00:00.000Z',
 }) => RadioSnapshotMapper.fromChannel(
   snapshotPayload(
     networkType: networkType,
     cells: cells,
     qualityFlag: qualityFlag,
+    timestamp: timestamp,
+  ),
+);
+
+/// Snapshot taken [seconds] after 2026-10-08T01:00:00Z.
+RadioSnapshot snapshotAt(int seconds) => snapshot(
+  timestamp: formatUtc(
+    DateTime.utc(2026, 10, 8, 1).add(Duration(seconds: seconds)),
   ),
 );
 

@@ -43,16 +43,16 @@ apps/mobile/android/app/src/main/kotlin/org/opennetiq/
   measurement/location/ LocationCollector
   measurement/speed/    SpeedTestEngine (OkHttp), ThroughputSampler
   measurement/latency/  LatencyEngine (ICMP/TCP/DNS)
-  service/              DriveTestForegroundService
+  measurement/service/  DriveTestService (foreground, ADR-014)
   bridge/               Pigeon host API implementations
 ```
 
 Dependency rule: `features → domain ← data → platform`. Domain has no Flutter or plugin imports.
 
 ## 3. Data flow (drive test, Phase 1)
-1. `DriveTestForegroundService` ticks every *n* ms → requests cell update + latest GNSS fix.
-2. Kotlin emits a `SampleDto` on the `radio` event channel (also buffered natively if UI is detached).
-3. `DriveTestController` → `RecordSampleUseCase` → `SampleRepository` → Drift transaction (sample + cell observations).
+1. `DriveTestService` (foreground, type `location`) keeps the process and the application-owned Flutter engine alive (ADR-014); `RadioCollector` ticks every *n* ms → requests cell update; `LocationCollector` streams GNSS.
+2. Kotlin emits snapshots on the `radio` and `location` event channels; `recordingPipelineProvider` (root container, no screen needed) joins each tick with the latest fix.
+3. `RecordingController` → `SampleRepository` → Drift transaction (sample + cell observations + session counters). Gap analysis at Stop; orphaned sessions aborted at next start.
 4. Optional scheduled tests run in Kotlin; results linked by `measurement_id` snapshot.
 5. Export use cases stream rows from Drift to CSV/GeoJSON writers (no full in-memory load).
 

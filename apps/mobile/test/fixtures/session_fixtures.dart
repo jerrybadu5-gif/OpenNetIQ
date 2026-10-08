@@ -72,8 +72,14 @@ class FakeSessionRepository implements SessionRepository {
   Future<void> startRecording(String sessionId) => throw UnimplementedError();
 
   @override
+  Future<void> pauseRecording(String sessionId) => throw UnimplementedError();
+
+  @override
   Future<void> finishRecording(String sessionId, {bool aborted = false}) =>
       throw UnimplementedError();
+
+  @override
+  Future<int> abortOrphanedSessions() async => 0;
 
   @override
   Future<MeasurementSession?> getSession(String sessionId) async =>

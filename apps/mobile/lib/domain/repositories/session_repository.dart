@@ -15,10 +15,18 @@ abstract interface class SessionRepository {
   /// Sets status `recording` and `started_at` (first start only).
   Future<void> startRecording(String sessionId);
 
+  /// Sets status `paused` (resume with [startRecording]).
+  Future<void> pauseRecording(String sessionId);
+
   /// Sets status `completed` (or `aborted`) and `ended_at`.
   Future<void> finishRecording(String sessionId, {bool aborted = false});
 
   Future<MeasurementSession?> getSession(String sessionId);
+
+  /// Crash recovery at app start: sessions left `created`, `recording` or
+  /// `paused` by a killed process become `aborted`, ending at their last
+  /// sample. Returns the number of sessions aborted.
+  Future<int> abortOrphanedSessions();
 
   /// Newest first.
   Stream<List<MeasurementSession>> watchSessions();
@@ -41,4 +49,7 @@ abstract interface class SampleRepository {
   });
 
   Future<int> countSamples(String sessionId);
+
+  /// Sample timestamps of a session, oldest first (gap detection).
+  Future<List<DateTime>> sampleTimestamps(String sessionId);
 }
