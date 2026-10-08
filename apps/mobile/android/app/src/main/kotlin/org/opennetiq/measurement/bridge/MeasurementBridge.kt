@@ -8,6 +8,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.opennetiq.measurement.location.LocationCollector
 import org.opennetiq.measurement.radio.RadioCollector
 
 /**
@@ -21,13 +22,31 @@ class MeasurementBridge(
 ) : MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
 
     private val collector = RadioCollector(activity.applicationContext)
+    private val locationCollector = LocationCollector(activity.applicationContext)
     private val controlChannel = MethodChannel(messenger, CONTROL_CHANNEL)
     private val radioChannel = EventChannel(messenger, RADIO_CHANNEL)
+    private val locationChannel = EventChannel(messenger, LOCATION_CHANNEL)
     private var pendingPermissionResult: MethodChannel.Result? = null
+
+    /** Location stream (issue #14): one LocationStatus per interval. */
+    private val locationStreamHandler = object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+            locationCollector.start(
+                intervalMs = intervalFrom(arguments),
+                onStatus = { events.success(it.toMap()) },
+                onError = { code, message -> events.error(code, message, null) },
+            )
+        }
+
+        override fun onCancel(arguments: Any?) {
+            locationCollector.stop()
+        }
+    }
 
     init {
         controlChannel.setMethodCallHandler(this)
         radioChannel.setStreamHandler(this)
+        locationChannel.setStreamHandler(locationStreamHandler)
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -39,10 +58,8 @@ class MeasurementBridge(
     }
 
     override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-        val requested = ((arguments as? Map<*, *>)?.get("interval_ms") as? Number)?.toLong()
-        val intervalMs = (requested ?: DEFAULT_INTERVAL_MS).coerceIn(MIN_INTERVAL_MS, MAX_INTERVAL_MS)
         collector.start(
-            intervalMs = intervalMs,
+            intervalMs = intervalFrom(arguments),
             onSnapshot = { events.success(it.toMap()) },
             onError = { code, message -> events.error(code, message, null) },
         )
@@ -62,10 +79,17 @@ class MeasurementBridge(
 
     fun dispose() {
         collector.stop()
+        locationCollector.stop()
         controlChannel.setMethodCallHandler(null)
         radioChannel.setStreamHandler(null)
+        locationChannel.setStreamHandler(null)
         pendingPermissionResult?.error("CANCELLED", "Activity destroyed", null)
         pendingPermissionResult = null
+    }
+
+    private fun intervalFrom(arguments: Any?): Long {
+        val requested = ((arguments as? Map<*, *>)?.get("interval_ms") as? Number)?.toLong()
+        return (requested ?: DEFAULT_INTERVAL_MS).coerceIn(MIN_INTERVAL_MS, MAX_INTERVAL_MS)
     }
 
     private fun requestPermissions(result: MethodChannel.Result) {
@@ -95,6 +119,7 @@ class MeasurementBridge(
     companion object {
         const val CONTROL_CHANNEL = "org.opennetiq/measurement"
         const val RADIO_CHANNEL = "org.opennetiq/radio"
+        const val LOCATION_CHANNEL = "org.opennetiq/location"
         private const val PERMISSION_REQUEST_CODE = 0x4E51 // "NQ"
         private const val DEFAULT_INTERVAL_MS = 1_000L
         private const val MIN_INTERVAL_MS = 500L

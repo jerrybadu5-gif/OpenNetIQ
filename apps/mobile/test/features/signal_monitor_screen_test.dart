@@ -6,18 +6,29 @@ import 'package:opennetiq_mobile/app.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
+import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
+import '../fixtures/location_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
 
-Future<void> pumpScreen(WidgetTester tester, FakeRadioRepository repo) async {
-  tester.view.physicalSize = const Size(1200, 3200);
+Future<void> pumpScreen(
+  WidgetTester tester,
+  FakeRadioRepository repo, {
+  FakeLocationRepository? location,
+}) async {
+  tester.view.physicalSize = const Size(1200, 3600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [radioRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        radioRepositoryProvider.overrideWithValue(repo),
+        locationRepositoryProvider.overrideWithValue(
+          location ?? FakeLocationRepository(statuses: [locationStatus()]),
+        ),
+      ],
       child: const MaterialApp(home: SignalMonitorScreen()),
     ),
   );
@@ -50,6 +61,23 @@ void main() {
     expect(find.text('Neighbour cells (1)'), findsOneWidget);
     expect(find.text('RSRP -108 dBm'), findsOneWidget);
     expect(find.text('Collecting samples...'), findsOneWidget);
+    expect(find.text('-9.443800, 147.180300'), findsOneWidget);
+  });
+
+  testWidgets('GPS starts only with location permission', (tester) async {
+    final location = FakeLocationRepository(statuses: [locationStatus()]);
+    final repo = FakeRadioRepository(
+      permissions: deniedPermissions,
+      afterRequest: grantedPermissions,
+      snapshots: [snapshot()],
+    );
+    await pumpScreen(tester, repo, location: location);
+    expect(location.watchCount, 0);
+
+    await tester.tap(find.text('Grant access'));
+    await tester.pumpAndSettle();
+    expect(location.watchCount, 1);
+    expect(find.text('Good'), findsOneWidget);
   });
 
   testWidgets('shows LTE anchor, NR leg and the trend chart in 5G NSA', (
@@ -144,7 +172,12 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [radioRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          radioRepositoryProvider.overrideWithValue(repo),
+          locationRepositoryProvider.overrideWithValue(
+            FakeLocationRepository(statuses: [locationStatus()]),
+          ),
+        ],
         child: const OpenNetIqApp(),
       ),
     );

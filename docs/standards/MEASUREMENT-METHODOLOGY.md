@@ -55,6 +55,8 @@ Regulatory coverage thresholds are configured per jurisdiction in Phase 4 (e.g.,
 | Snapshot | `STALE` | Newest cell report older than 2 s |
 | Snapshot | `CACHED` | `requestCellInfoUpdate` failed; cached `getAllCellInfo` used |
 | Snapshot | `NO_PHONE_STATE` | READ_PHONE_STATE not granted: network type and 5G NSA not detectable |
+| Sample | `MOCK_LOCATION` | Android reported a mock-location provider; excluded from regulatory statistics |
+| Sample | `NO_GPS_FIX` | `gps_quality = NONE` (no fix, fix older than 30 s, or Location switched off) |
 
 Multiple flags are sorted and joined with `|`.
 

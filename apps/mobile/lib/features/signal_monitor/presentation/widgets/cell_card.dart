@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:opennetiq_mobile/domain/entities/cell_observation.dart';
 import 'package:opennetiq_mobile/domain/entities/rat.dart';
 import 'package:opennetiq_mobile/domain/value_objects/signal_quality.dart';
+import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/metric_tile.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/signal_colors.dart';
 
 /// Serving-cell card: level with quality class, identity and all metrics.
@@ -84,7 +85,7 @@ class CellCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 for (final (label, value) in metrics)
-                  _Metric(label: label, value: value),
+                  MetricTile(label: label, value: value),
               ],
             ),
             if (cell.qualityFlag != null)
@@ -97,28 +98,6 @@ class CellCard extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: 96,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: theme.textTheme.labelSmall),
-          Text(value, style: theme.textTheme.bodyLarge),
-        ],
       ),
     );
   }
