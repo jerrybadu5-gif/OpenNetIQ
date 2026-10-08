@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
+import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
+import 'package:opennetiq_mobile/features/location/presentation/location_card.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_history.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/cell_card.dart';
@@ -57,11 +60,13 @@ class LiveSignalView extends ConsumerWidget {
     // Watched here (not in _SnapshotView) so the trend records from the
     // first snapshot onwards.
     final history = ref.watch(signalHistoryProvider);
+    final location = ref.watch(locationStatusProvider);
     return switch (snapshot) {
       AsyncData(:final value) => _SnapshotView(
         snapshot: value,
         permissions: permissions,
         history: history,
+        location: location,
       ),
       AsyncError(:final error) => Center(
         child: StatusMessage(
@@ -91,11 +96,13 @@ class _SnapshotView extends StatelessWidget {
     required this.snapshot,
     required this.permissions,
     required this.history,
+    required this.location,
   });
 
   final RadioSnapshot snapshot;
   final RadioPermissions permissions;
   final List<SignalPoint> history;
+  final AsyncValue<LocationStatus> location;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +112,7 @@ class _SnapshotView extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       children: [
         NetworkHeader(snapshot: snapshot, permissions: permissions),
+        LocationCard(status: location),
         if (primary == null)
           const StatusMessage(
             icon: Icons.signal_cellular_connected_no_internet_0_bar,

@@ -16,3 +16,4 @@ minSdk 29, targetSdk 35.
 | Feature | Docs | Status |
 |---|---|---|
 | Signal monitor (2G-5G live cells) | [docs/features/signal-monitor](../../docs/features/signal-monitor/README.md) | M1 |
+| Location (GNSS collector) | [docs/features/location](../../docs/features/location/README.md) | M1 |

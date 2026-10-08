@@ -30,6 +30,9 @@ class ChannelReader {
     throw _invalid(key, 'list');
   }
 
+  /// Raw nested value (for maps inside maps); null when missing.
+  Object? raw(String key) => _map[key];
+
   String requireString(String key) =>
       string(key) ?? (throw FormatException('Missing "$key" in $_context'));
 

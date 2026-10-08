@@ -78,7 +78,9 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.2 Location Engine (Kotlin) — `gis`, `mobile`
 - `LocationManager.GPS_PROVIDER` (AOSP, no Google Play Services dependency → F-Droid compatible; ADR-006).
 - Captures lat, lon, altitude, speed, bearing, horizontal accuracy, vertical accuracy, satellites used, provider.
-- GNSS fix age guard: samples with fix age > 2 s or accuracy > 50 m flagged `gps_quality = POOR`.
+- GNSS fix age guard: samples with fix age > 2 s or accuracy > 50 m flagged `gps_quality = POOR`; fixes older than 30 s dropped (`NONE`).
+- Mock-location detection (`Location.isMock`): samples flagged `MOCK_LOCATION` and excluded from regulatory statistics.
+- Status: implemented in issue #14 (`docs/features/location/`).
 
 #### 1.3 Drive-Test Session Engine — `mobile`
 - Foreground service (`foregroundServiceType="location|dataSync"`) with persistent notification; survives screen-off.
@@ -159,7 +161,9 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 |---|---|---|---|
 | 3.1 | Web browsing test | DNS, TCP, TLS, TTFB, DOM loaded, full load for configurable URL list (WebView-instrumented) | ETSI TR 102 678 / EG 202 057, ITU-T G.1030 |
 | 3.2 | Video streaming test | ExoPlayer/Media3 DASH test stream: start-up delay, stall count/ratio, mean bitrate, resolution switches, failures | ITU-T P.1203 (model), G.1010 |
-| 3.3 | Voice testing | Android call automation where permitted (CSFB/VoLTE/VoNR): call setup time, setup success, drop rate; MOS estimation via E-model (G.107) — POLQA/P.863 only with licensed tools | ITU-T P.863, G.107, E.800 |
+| 3.3 | Voice testing (field-test build) | Default-dialer role (`InCallService`) for exact call states: call setup success rate, call setup time, dropped-call rate, failure cause, RAT used (CS / VoLTE / VoNR); MO calls to an auto-answer responder (second OpenNetIQ device or IVR test number); MOS estimate via E-model (G.107) — POLQA/P.863 only with licensed tools (Android blocks call-audio capture) | ETSI TS 102 250-2, ITU-T E.804, G.107, P.863, E.800 |
+| 3.3a | SMS testing (field-test build) | `SmsManager` with sent/delivery reports to a test number; SMS send success ratio, end-to-end delivery time, completion failure ratio; receiver mode on a second device | ETSI TS 102 250-2, ITU-T E.804 |
+| 3.3b | Field-test build flavor | `field` flavor holding dialer/SMS permissions, sideloaded or F-Droid only (Google Play restricts these permissions to default dialer/SMS apps); test SIMs only, never reads user calls/messages | Privacy-by-design |
 | 3.4 | Packet loss/jitter (UDP) | UDP echo server in `infra/test-server`; loss, jitter, reordering | RFC 3550, Y.1540 |
 | 3.5 | QoE scoring | Composite per-session QoE index (documented weights, versioned) | G.1010, G.1020 |
 | 3.6 | Analytics | DuckDB over Parquet exports for campaign analytics; KPI library (`backend/analytics`) | E.800, TS 32.450 |
