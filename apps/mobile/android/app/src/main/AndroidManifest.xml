@@ -6,6 +6,7 @@
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <application
         android:label="@string/app_name"
+        android:allowBackup="false"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

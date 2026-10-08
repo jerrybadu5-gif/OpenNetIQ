@@ -67,7 +67,7 @@ One row per sampling tick.
 | data_state | TEXT | – | yes | TM | Data connection state |
 | is_roaming | INTEGER | bool | yes | TM | |
 | radio_timestamp | TEXT | UTC ISO 8601 | yes | TM | CellInfo timestamp |
-| quality_flag | TEXT | – | yes | App | e.g. `STALE`; null when clean |
+| quality_flag | TEXT | – | yes | App | Pipe-joined, sorted: `STALE`, `CACHED`, `NO_PHONE_STATE`, `NO_GPS_FIX`, `MOCK_LOCATION`; null when clean |
 | created_at | TEXT | UTC ISO 8601 | no | App | |
 
 ## cell_observations
@@ -147,7 +147,7 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 ## app_settings
 | Column | Type | Null | Description |
 |---|---|---|---|
-| key | TEXT PK | no | Setting name |
+| key | TEXT PK | no | Setting name (e.g. `device_id` = this install's random device id) |
 | value | TEXT | no | Setting value |
 | updated_at | TEXT | no | UTC ISO 8601 |
 

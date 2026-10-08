@@ -6,6 +6,8 @@ import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
 import 'package:opennetiq_mobile/features/location/presentation/location_card.dart';
+import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
+import 'package:opennetiq_mobile/features/recording/presentation/record_button.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_history.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/cell_card.dart';
@@ -21,31 +23,56 @@ class SignalMonitorScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final permissions = ref.watch(radioPermissionsProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Signal monitor')),
-      body: switch (permissions) {
-        AsyncData(:final value) when !value.hasTelephony => const Center(
-          child: StatusMessage(
-            icon: Icons.signal_cellular_off,
-            title: 'No cellular radio',
-            message: 'This device cannot measure mobile networks.',
-          ),
-        ),
-        AsyncData(:final value) when !value.canMonitor => PermissionPrompt(
-          onRequest: () =>
-              ref.read(radioPermissionsProvider.notifier).request(),
-        ),
-        AsyncData(:final value) => LiveSignalView(permissions: value),
-        AsyncError(:final error) => Center(
-          child: StatusMessage(
-            icon: Icons.error_outline,
-            title: 'Permissions unavailable',
-            message: '$error',
-          ),
-        ),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
+    final canRecord = switch (permissions) {
+      AsyncData(:final value) => value.canMonitor,
+      _ => false,
+    };
+    final recording = ref.watch(
+      recordingControllerProvider.select((s) => s.isRecording),
     );
+    return PopScope(
+      canPop: !recording,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Stop recording before leaving this screen.'),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Signal monitor'),
+          actions: [if (canRecord) const RecordButton()],
+        ),
+        body: _body(ref, permissions),
+      ),
+    );
+  }
+
+  Widget _body(WidgetRef ref, AsyncValue<RadioPermissions> permissions) {
+    return switch (permissions) {
+      AsyncData(:final value) when !value.hasTelephony => const Center(
+        child: StatusMessage(
+          icon: Icons.signal_cellular_off,
+          title: 'No cellular radio',
+          message: 'This device cannot measure mobile networks.',
+        ),
+      ),
+      AsyncData(:final value) when !value.canMonitor => PermissionPrompt(
+        onRequest: () => ref.read(radioPermissionsProvider.notifier).request(),
+      ),
+      AsyncData(:final value) => LiveSignalView(permissions: value),
+      AsyncError(:final error) => Center(
+        child: StatusMessage(
+          icon: Icons.error_outline,
+          title: 'Permissions unavailable',
+          message: '$error',
+        ),
+      ),
+      _ => const Center(child: CircularProgressIndicator()),
+    };
   }
 }
 
@@ -61,6 +88,21 @@ class LiveSignalView extends ConsumerWidget {
     // first snapshot onwards.
     final history = ref.watch(signalHistoryProvider);
     final location = ref.watch(locationStatusProvider);
+    // Each radio tick is stored (with the latest location) while recording.
+    ref.listen<AsyncValue<RadioSnapshot>>(radioSnapshotProvider, (
+      previous,
+      next,
+    ) {
+      if (next case AsyncData(:final value)) {
+        final latestLocation = switch (ref.read(locationStatusProvider)) {
+          AsyncData(value: final status) => status,
+          _ => null,
+        };
+        ref
+            .read(recordingControllerProvider.notifier)
+            .onSnapshot(value, latestLocation);
+      }
+    });
     return switch (snapshot) {
       AsyncData(:final value) => _SnapshotView(
         snapshot: value,

@@ -53,6 +53,7 @@ class MeasurementBridge(
         when (call.method) {
             "getPermissionStatus" -> result.success(permissionStatus())
             "requestPermissions" -> requestPermissions(result)
+            "getDeviceInfo" -> result.success(deviceInfo())
             else -> result.notImplemented()
         }
     }
@@ -112,6 +113,31 @@ class MeasurementBridge(
         "has_telephony" to activity.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY),
         "api_level" to Build.VERSION.SDK_INT,
     )
+
+    /** `devices` row fields (DATA-DICTIONARY.md). No IMEI or other identifiers. */
+    private fun deviceInfo(): Map<String, Any?> = mapOf(
+        "manufacturer" to Build.MANUFACTURER,
+        "model" to Build.MODEL,
+        "android_version" to Build.VERSION.RELEASE,
+        "api_level" to Build.VERSION.SDK_INT,
+        "chipset" to chipset(),
+        "app_version" to appVersion(),
+    )
+
+    private fun chipset(): String? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Build.SOC_MODEL.takeUnless { it.isBlank() || it == Build.UNKNOWN }
+        } else {
+            null
+        }
+
+    @Suppress("DEPRECATION")
+    private fun appVersion(): String =
+        try {
+            activity.packageManager.getPackageInfo(activity.packageName, 0).versionName ?: "unknown"
+        } catch (e: PackageManager.NameNotFoundException) {
+            "unknown"
+        }
 
     private fun isGranted(permission: String): Boolean =
         activity.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED

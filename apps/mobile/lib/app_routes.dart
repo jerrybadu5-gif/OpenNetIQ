@@ -2,4 +2,5 @@
 abstract final class AppRoutes {
   static const String home = '/';
   static const String signal = '/signal';
+  static const String sessions = '/sessions';
 }
