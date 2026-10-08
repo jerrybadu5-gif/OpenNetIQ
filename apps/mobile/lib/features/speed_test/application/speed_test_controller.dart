@@ -58,8 +58,6 @@ class SpeedTestController extends Notifier<SpeedTestState> {
   StreamSubscription<SpeedTestEvent>? _subscription;
   Completer<SpeedTestResult?>? _outcome;
 
-  /// How long to wait for the first radio snapshot before testing anyway.
-  static const Duration radioWait = Duration(seconds: 3);
 
   @override
   SpeedTestState build() {
@@ -192,7 +190,7 @@ class SpeedTestController extends Notifier<SpeedTestState> {
   }
 
   Future<RadioSnapshot?> _awaitRadio() async {
-    final deadline = _now().add(radioWait);
+    final deadline = _now().add(ref.read(speedTestRadioWaitProvider));
     while (state.running) {
       if (ref.read(radioSnapshotProvider) case AsyncData(:final value)) {
         return value;
@@ -271,6 +269,12 @@ class SpeedTestController extends Notifier<SpeedTestState> {
         );
   }
 }
+
+/// How long a test waits for the first radio snapshot before running
+/// without one (no permission, no telephony).
+final speedTestRadioWaitProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 3),
+);
 
 final speedTestControllerProvider =
     NotifierProvider<SpeedTestController, SpeedTestState>(

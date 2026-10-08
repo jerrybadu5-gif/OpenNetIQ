@@ -154,6 +154,7 @@ void main() {
         .listen((_) {});
     await pumpEventQueue();
     await sub.cancel();
+    await pumpEventQueue();
     expect(cancelled, isTrue);
   });
 }

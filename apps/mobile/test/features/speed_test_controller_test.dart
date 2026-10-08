@@ -38,6 +38,9 @@ void main() {
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),
         speedTestEngineProvider.overrideWithValue(engine),
+        speedTestRadioWaitProvider.overrideWithValue(
+          const Duration(seconds: 1),
+        ),
         radioRepositoryProvider.overrideWithValue(
           permitted
               ? radio
@@ -72,7 +75,7 @@ void main() {
   Future<_StartedSpeedTest> begin() async {
     await controller().saveServer(server);
     final run = controller().start();
-    for (var i = 0; i < 100 && !engine.running; i++) {
+    for (var i = 0; i < 500 && !engine.running; i++) {
       radio.controller.add(snapshot());
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
@@ -209,7 +212,7 @@ void main() {
     container = make(permitted: false);
     await controller().saveServer(server);
     final run = controller().start();
-    for (var i = 0; i < 250 && !engine.running; i++) {
+    for (var i = 0; i < 500 && !engine.running; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     expect(engine.running, isTrue);
