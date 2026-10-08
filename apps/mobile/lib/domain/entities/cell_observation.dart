@@ -59,7 +59,16 @@ class CellObservation {
 
   /// Main level metric for the RAT: RSRP (LTE), SS-RSRP (NR), RSCP (WCDMA),
   /// RSSI (GSM).
-  double? get levelDbm => switch (rat) {
+  double? get levelDbm =>
+      levelFor(rat, rsrpDbm: rsrpDbm, rscpDbm: rscpDbm, rssiDbm: rssiDbm);
+
+  /// Level metric rule shared with stored samples (session maps, stats).
+  static double? levelFor(
+    Rat rat, {
+    double? rsrpDbm,
+    double? rscpDbm,
+    double? rssiDbm,
+  }) => switch (rat) {
     Rat.lte || Rat.nr => rsrpDbm,
     Rat.wcdma => rscpDbm,
     Rat.gsm => rssiDbm,

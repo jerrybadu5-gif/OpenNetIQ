@@ -4,9 +4,13 @@ import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/core/uuid7.dart';
 import 'package:opennetiq_mobile/data/local/app_database.dart';
 import 'package:opennetiq_mobile/data/local/sample_rows.dart';
+import 'package:opennetiq_mobile/domain/entities/cell_observation.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
+import 'package:opennetiq_mobile/domain/entities/network_type.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
+import 'package:opennetiq_mobile/domain/entities/rat.dart';
+import 'package:opennetiq_mobile/domain/entities/sample_point.dart';
 import 'package:opennetiq_mobile/domain/repositories/session_repository.dart';
 import 'package:opennetiq_mobile/domain/services/sample_quality.dart';
 
@@ -225,6 +229,81 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
       for (final row in rows)
         if (parseUtc(row.read(_db.samples.timestamp)) case final DateTime t) t,
     ];
+  }
+
+  @override
+  Future<List<SamplePoint>> loadSamplePoints(String sessionId) async {
+    final samples = await _db
+        .customSelect(
+          'SELECT measurement_id, timestamp, lat, lon, network_type, '
+          'gps_quality, quality_flag FROM samples WHERE session_id = ? '
+          'ORDER BY timestamp',
+          variables: [Variable.withString(sessionId)],
+          readsFrom: {_db.samples},
+        )
+        .get();
+    final cells = await _db
+        .customSelect(
+          'SELECT c.measurement_id, c.rat, c.rsrp_dbm, c.rscp_dbm, c.rssi_dbm '
+          'FROM cell_observations c '
+          'JOIN samples s ON s.measurement_id = c.measurement_id '
+          'WHERE s.session_id = ? AND c.is_serving = 1 ORDER BY c.rowid',
+          variables: [Variable.withString(sessionId)],
+          readsFrom: {_db.samples, _db.cellObservations},
+        )
+        .get();
+    final serving = <String, List<(Rat, double?)>>{};
+    for (final c in cells) {
+      final rat = Rat.fromWire(c.read<String>('rat'));
+      if (rat == null) continue;
+      final level = CellObservation.levelFor(
+        rat,
+        rsrpDbm: c.readNullable<double>('rsrp_dbm'),
+        rscpDbm: c.readNullable<double>('rscp_dbm'),
+        rssiDbm: c.readNullable<double>('rssi_dbm'),
+      );
+      (serving[c.read<String>('measurement_id')] ??= []).add((rat, level));
+    }
+    return [
+      for (final row in samples)
+        if (parseUtc(row.read<String>('timestamp')) case final DateTime ts)
+          _samplePoint(row, ts, serving[row.read<String>('measurement_id')]),
+    ];
+  }
+
+  static SamplePoint _samplePoint(
+    QueryRow row,
+    DateTime timestamp,
+    List<(Rat, double?)>? serving,
+  ) {
+    final networkType = NetworkType.fromWire(row.read<String>('network_type'));
+    final primary = _primary(serving, networkType);
+    final flags = row.readNullable<String>('quality_flag') ?? '';
+    return SamplePoint(
+      timestamp: timestamp,
+      networkType: networkType,
+      lat: row.readNullable<double>('lat'),
+      lon: row.readNullable<double>('lon'),
+      mockLocation: flags.split('|').contains(SampleQuality.mockLocation),
+      gpsQuality: GpsQuality.fromWire(row.readNullable<String>('gps_quality')),
+      rat: primary?.$1,
+      levelDbm: primary?.$2,
+    );
+  }
+
+  /// Same rule as RadioSnapshot.primaryCell: LTE anchor in 5G NSA,
+  /// otherwise the first serving cell.
+  static (Rat, double?)? _primary(
+    List<(Rat, double?)>? serving,
+    NetworkType? networkType,
+  ) {
+    if (serving == null || serving.isEmpty) return null;
+    if (networkType?.isNsa ?? false) {
+      for (final c in serving) {
+        if (c.$1 == Rat.lte) return c;
+      }
+    }
+    return serving.first;
   }
 
   SimpleSelectStatement<$SessionsTable, SessionRow> _sessionQuery(

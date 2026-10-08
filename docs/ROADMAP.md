@@ -112,6 +112,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 - Screens: Live Signal Dashboard (serving + neighbours, RAT, band, gauges), Speed Test, Latency, Drive Test (live map with RSRP-coloured track on flutter_map / OSM), Sessions list & detail, Export, Settings, Consent/Onboarding.
 - RSRP colour scale per `docs/standards/MEASUREMENT-METHODOLOGY.md` (≥ −80 excellent … < −110 no/poor service).
 - Charts with fl_chart (RSRP/SINR time series, throughput curve).
+- Status: Drive test live map, sessions list and session detail (map, summary, statistics, delete) implemented in issue #18 (`docs/features/session-map/`, ADR-015 for base-map tiles).
 
 #### 1.8 Export — `gis`
 - **CSV** (one row per sample, flat, documented column dictionary) and **GeoJSON** (RFC 7946, `Point` per sample + `LineString` per session).

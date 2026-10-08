@@ -6,6 +6,7 @@ import 'package:opennetiq_mobile/core/flavor.dart';
 import 'package:opennetiq_mobile/core/theme/app_theme.dart';
 import 'package:opennetiq_mobile/features/drive_test/presentation/drive_test_screen.dart';
 import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
+import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
@@ -27,6 +28,13 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'sessions',
             builder: (context, state) => const SessionsScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) =>
+                    SessionDetailScreen(sessionId: state.pathParameters['id']!),
+              ),
+            ],
           ),
         ],
       ),

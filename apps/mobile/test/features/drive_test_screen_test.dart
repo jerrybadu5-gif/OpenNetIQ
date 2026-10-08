@@ -12,6 +12,7 @@ import 'package:opennetiq_mobile/features/signal_monitor/application/signal_moni
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
 import '../fixtures/location_fixtures.dart';
+import '../fixtures/map_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
 import '../fixtures/recording_fixtures.dart';
 
@@ -24,6 +25,9 @@ void main() {
     bool permitted = true,
     bool? ignoringBattery = true,
   }) async {
+    tester.view.physicalSize = const Size(1080, 3200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final controller = StubRecordingController(state);
     final service = FakeRecordingService(
       ignoringBatteryOptimizations: ignoringBattery,
@@ -31,6 +35,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          noTiles,
           recordingControllerProvider.overrideWith(() => controller),
           recordingServiceProvider.overrideWithValue(service),
           clockProvider.overrideWithValue(clock.call),
@@ -143,6 +148,7 @@ void main() {
     );
     expect(find.text('Recording'), findsOneWidget);
     expect(find.text('Highway 1'), findsOneWidget);
+    expect(find.text('Waiting for a GPS fix'), findsOneWidget); // live map
     expect(find.text('0:10'), findsOneWidget);
     expect(find.text('80.0 %'), findsOneWidget);
     expect(find.textContaining('RSRP -95 dBm'), findsOneWidget);

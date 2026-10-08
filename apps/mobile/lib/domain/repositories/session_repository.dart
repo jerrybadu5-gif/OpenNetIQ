@@ -1,6 +1,7 @@
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
+import 'package:opennetiq_mobile/domain/entities/sample_point.dart';
 
 abstract interface class SessionRepository {
   Future<MeasurementSession> createSession({
@@ -52,4 +53,8 @@ abstract interface class SampleRepository {
 
   /// Sample timestamps of a session, oldest first (gap detection).
   Future<List<DateTime>> sampleTimestamps(String sessionId);
+
+  /// Samples reduced to position + primary serving-cell level, oldest first
+  /// (session map and statistics).
+  Future<List<SamplePoint>> loadSamplePoints(String sessionId);
 }

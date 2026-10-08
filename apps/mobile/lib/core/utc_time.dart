@@ -16,3 +16,11 @@ DateTime? parseUtc(String? value) {
 
 /// Current time as an ISO 8601 UTC string.
 String nowUtc() => formatUtc(DateTime.now());
+
+/// Local date and time for display, e.g. `2026-10-08 14:36:05`.
+String formatLocalDateTime(DateTime t) {
+  final l = t.toLocal();
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${l.year}-${two(l.month)}-${two(l.day)} '
+      '${two(l.hour)}:${two(l.minute)}:${two(l.second)}';
+}
