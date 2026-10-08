@@ -3,15 +3,23 @@ import 'package:opennetiq_mobile/data/repositories/platform_radio_repository.dar
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/repositories/radio_repository.dart';
+import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_history.dart';
 
 final radioRepositoryProvider = Provider<RadioRepository>(
   (ref) => const PlatformRadioRepository(),
 );
 
-/// Sampling interval for the live dashboard (methodology default: 1 s).
+/// Sampling interval: the session's interval while one is open, otherwise
+/// the methodology default (1 s) for the live dashboard.
 final radioIntervalProvider = Provider<Duration>(
-  (ref) => const Duration(seconds: 1),
+  (ref) => ref.watch(
+    recordingControllerProvider.select(
+      (s) => s.phase == RecordingPhase.idle
+          ? RecordingOptions.defaultInterval
+          : s.interval,
+    ),
+  ),
 );
 
 final radioPermissionsProvider =

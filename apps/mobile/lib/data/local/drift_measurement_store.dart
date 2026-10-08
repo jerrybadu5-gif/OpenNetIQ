@@ -75,6 +75,43 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
   }
 
   @override
+  Future<void> pauseRecording(String sessionId) async {
+    final now = formatUtc(_now());
+    await _db.customUpdate(
+      'UPDATE sessions SET status = ?, updated_at = ?, version = version + 1 '
+      'WHERE session_id = ?',
+      variables: [
+        Variable.withString(SessionStatus.paused.wireValue),
+        Variable.withString(now),
+        Variable.withString(sessionId),
+      ],
+      updates: {_db.sessions},
+      updateKind: UpdateKind.update,
+    );
+  }
+
+  @override
+  Future<int> abortOrphanedSessions() {
+    final now = formatUtc(_now());
+    return _db.customUpdate(
+      'UPDATE sessions SET status = ?, '
+      'ended_at = COALESCE((SELECT MAX(s.timestamp) FROM samples s '
+      'WHERE s.session_id = sessions.session_id), started_at, created_at), '
+      'updated_at = ?, version = version + 1 '
+      'WHERE status IN (?, ?, ?)',
+      variables: [
+        Variable.withString(SessionStatus.aborted.wireValue),
+        Variable.withString(now),
+        Variable.withString(SessionStatus.created.wireValue),
+        Variable.withString(SessionStatus.recording.wireValue),
+        Variable.withString(SessionStatus.paused.wireValue),
+      ],
+      updates: {_db.sessions},
+      updateKind: UpdateKind.update,
+    );
+  }
+
+  @override
   Future<void> finishRecording(String sessionId, {bool aborted = false}) async {
     final now = formatUtc(_now());
     final status = aborted ? SessionStatus.aborted : SessionStatus.completed;
@@ -175,6 +212,19 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
       ..addColumns([count])
       ..where(_db.samples.sessionId.equals(sessionId));
     return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  @override
+  Future<List<DateTime>> sampleTimestamps(String sessionId) async {
+    final query = _db.selectOnly(_db.samples)
+      ..addColumns([_db.samples.timestamp])
+      ..where(_db.samples.sessionId.equals(sessionId))
+      ..orderBy([OrderingTerm.asc(_db.samples.timestamp)]);
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        if (parseUtc(row.read(_db.samples.timestamp)) case final DateTime t) t,
+    ];
   }
 
   SimpleSelectStatement<$SessionsTable, SessionRow> _sessionQuery(

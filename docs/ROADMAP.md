@@ -83,11 +83,12 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 - Status: implemented in issue #14 (`docs/features/location/`).
 
 #### 1.3 Drive-Test Session Engine — `mobile`
-- Foreground service (`foregroundServiceType="location|dataSync"`) with persistent notification; survives screen-off.
+- Foreground service (`foregroundServiceType="location"`, ADR-014) with persistent notification; survives screen-off and swipe-away.
 - Sampling interval selectable: **1 s / 2 s / 5 s**.
 - Session lifecycle: `created → recording → paused → completed | aborted`; crash-safe (WAL mode, every sample committed).
 - Session metadata: name, route/area, operator under test, vehicle/walk, notes, device, app version, methodology version.
 - Optional scheduled test script per session: e.g., *every 60 s: latency (20 pings) + DL (10 s) + UL (10 s)*.
+- Status: implemented in issue #17 (`docs/features/drive-test/`): Drive test screen, pause/resume, crash recovery, gap report. Scheduled test scripts follow with #19/#20.
 
 #### 1.4 Speed Test Engine (Kotlin, OkHttp) — `telecom`
 - Kotlin implementation for timing accuracy (no Dart isolate/GC jitter in the hot path).
@@ -104,7 +105,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.6 Local Storage (Drift / SQLite) — `mobile`
 - Schema: `database/mobile/schema_v1.sql` (sessions, samples, cell_observations, speed_tests, latency_tests, devices, app_settings).
 - UUIDv7 keys, UTC ISO 8601 timestamps, `schema_version`, `created_at`, `updated_at`.
-- Status: implemented in issue #16 (`docs/features/local-storage/`), with foreground recording from the Signal monitor and a Sessions screen.
+- Status: implemented in issue #16 (`docs/features/local-storage/`), with recording and a Sessions screen.
 - Retention setting + manual delete per session (privacy).
 
 #### 1.7 UI (Flutter) — `mobile`
