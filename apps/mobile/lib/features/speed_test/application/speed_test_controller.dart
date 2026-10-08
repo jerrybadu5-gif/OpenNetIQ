@@ -58,7 +58,6 @@ class SpeedTestController extends Notifier<SpeedTestState> {
   StreamSubscription<SpeedTestEvent>? _subscription;
   Completer<SpeedTestResult?>? _outcome;
 
-
   @override
   SpeedTestState build() {
     ref.onDispose(() => _subscription?.cancel());
