@@ -34,6 +34,9 @@ jobs:
       - name: Format
         if: steps.detect.outputs.present == 'true'
         run: dart format --output=none --set-exit-if-changed lib test
+      - name: Generate code (Drift)
+        if: steps.detect.outputs.present == 'true'
+        run: dart run build_runner build --delete-conflicting-outputs
       - name: Analyze (lint)
         if: steps.detect.outputs.present == 'true'
         run: flutter analyze --fatal-infos
@@ -43,8 +46,9 @@ jobs:
       - name: Enforce coverage >= 80%
         if: steps.detect.outputs.present == 'true'
         run: |
-          total=$(awk -F: '/^LF:/{lf+=$2} /^LH:/{lh+=$2} END{if(lf==0){print 100}else{printf "%.1f", lh*100/lf}}' coverage/lcov.info)
-          echo "Line coverage: ${total}%"
+          # Generated code (*.g.dart) is excluded from the coverage gate.
+          total=$(awk -F: '/^SF:/{skip=($2 ~ /\.g\.dart$/)} !skip && /^LF:/{lf+=$2} !skip && /^LH:/{lh+=$2} END{if(lf==0){print 100}else{printf "%.1f", lh*100/lf}}' coverage/lcov.info)
+          echo "Line coverage (excluding generated code): ${total}%"
           awk -v t="$total" 'BEGIN{exit (t>=80)?0:1}'
       - name: Kotlin unit tests
         if: steps.detect.outputs.present == 'true' && hashFiles('apps/mobile/android/gradlew') != ''

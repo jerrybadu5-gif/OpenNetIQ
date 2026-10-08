@@ -104,6 +104,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.6 Local Storage (Drift / SQLite) — `mobile`
 - Schema: `database/mobile/schema_v1.sql` (sessions, samples, cell_observations, speed_tests, latency_tests, devices, app_settings).
 - UUIDv7 keys, UTC ISO 8601 timestamps, `schema_version`, `created_at`, `updated_at`.
+- Status: implemented in issue #16 (`docs/features/local-storage/`), with foreground recording from the Signal monitor and a Sessions screen.
 - Retention setting + manual delete per session (privacy).
 
 #### 1.7 UI (Flutter) — `mobile`

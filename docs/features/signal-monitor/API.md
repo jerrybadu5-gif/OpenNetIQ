@@ -27,7 +27,7 @@ Event = `RadioSnapshot`:
 | `network_type` | string | `samples.network_type` enum |
 | `data_state` | string? | `CONNECTED`, `DISCONNECTED`, ... |
 | `is_roaming` | bool? | |
-| `quality_flag` | string? | `STALE`, `CACHED`, `NO_PHONE_STATE`, joined with `|` |
+| `quality_flag` | string? | `STALE`, `CACHED`, `NO_PHONE_STATE`, pipe-joined |
 | `cells` | list | `CellObservation` maps |
 
 `CellObservation` keys are exactly the `cell_observations` columns of DATA-DICTIONARY.md except ids:

@@ -14,4 +14,5 @@ abstract final class MeasurementChannels {
 
   static const String getPermissionStatus = 'getPermissionStatus';
   static const String requestPermissions = 'requestPermissions';
+  static const String getDeviceInfo = 'getDeviceInfo';
 }

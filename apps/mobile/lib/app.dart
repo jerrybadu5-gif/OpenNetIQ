@@ -5,6 +5,7 @@ import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/core/flavor.dart';
 import 'package:opennetiq_mobile/core/theme/app_theme.dart';
 import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
+import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
 final routerProvider = Provider<GoRouter>(
@@ -17,6 +18,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'signal',
             builder: (context, state) => const SignalMonitorScreen(),
+          ),
+          GoRoute(
+            path: 'sessions',
+            builder: (context, state) => const SessionsScreen(),
           ),
         ],
       ),

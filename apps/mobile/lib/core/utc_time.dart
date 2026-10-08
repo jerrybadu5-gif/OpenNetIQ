@@ -1,7 +1,11 @@
-/// Formats [t] as ISO 8601 UTC with millisecond precision, always ending in `Z`.
+/// Formats [t] as ISO 8601 UTC with millisecond precision, always ending in `Z`
+/// (e.g. `2026-10-07T14:36:00.000Z`), matching the Kotlin `UtcTime` output.
 String formatUtc(DateTime t) {
-  final s = t.toUtc().toIso8601String();
-  return s.endsWith('Z') ? s : '${s}Z';
+  final utc = t.toUtc();
+  return DateTime.fromMillisecondsSinceEpoch(
+    utc.millisecondsSinceEpoch,
+    isUtc: true,
+  ).toIso8601String();
 }
 
 /// Parses an ISO 8601 UTC timestamp. Returns null unless it ends in `Z`.

@@ -23,6 +23,13 @@ class HomeScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.signal),
           ),
+          ListTile(
+            leading: const Icon(Icons.folder_open),
+            title: const Text('Sessions'),
+            subtitle: const Text('Recorded measurements stored on this device'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.sessions),
+          ),
           const ListTile(
             enabled: false,
             leading: Icon(Icons.speed),
