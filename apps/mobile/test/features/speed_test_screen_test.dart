@@ -65,8 +65,13 @@ void main() {
 
   testWidgets('starts a test with the saved server', (tester) async {
     final stub = await pump(tester);
-    expect(find.widgetWithText(TextField, 'Test server URL'), findsOneWidget);
-    expect(find.text('https://speed.example.org/backend/'), findsOneWidget);
+    final field = find.widgetWithText(TextField, 'Test server URL');
+    expect(field, findsOneWidget);
+    // Read the controller: newer Flutter also renders a display copy.
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      'https://speed.example.org/backend/',
+    );
     await tester.tap(find.text('Start test'));
     expect(stub.starts, 1);
   });
