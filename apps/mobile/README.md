@@ -11,3 +11,8 @@ Run: `flutter run --flavor dev -t lib/main_dev.dart` (or `prod` with `lib/main_p
 Build: `flutter build apk --debug --flavor dev -t lib/main_dev.dart`.
 minSdk 29, targetSdk 35.
 
+
+## Features
+| Feature | Docs | Status |
+|---|---|---|
+| Signal monitor (2G-5G live cells) | [docs/features/signal-monitor](../../docs/features/signal-monitor/README.md) | M1 |

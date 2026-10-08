@@ -22,7 +22,7 @@ Claude acts as CTO, telecom architect, PM, Android/backend lead, DevOps, GIS, da
 - Clean Architecture, DDD-lite, SOLID, repository pattern, DI. No business logic in UI. No hardcoded values or secrets.
 
 ## Workflow
-- **Publication rule:** work stays local in `Documents\OpenNetIQ`. Push to GitHub happens only after a phase is complete, tested and validated, and is done by the maintainer via VS Code. Claude never pushes or creates remote GitHub resources unless explicitly asked. Claude may commit locally.
+- **Publication rule:** work stays local in `Documents\Developer\OpenNetIQ`. Push to GitHub happens only after a phase is complete, tested and validated, and is done by the maintainer via VS Code. Claude never pushes or creates remote GitHub resources unless explicitly asked. Claude may commit locally.
 - GitHub Flow: `main`, `develop`, `feature/*`. PR template mandatory. Coverage >= 80 %.
 - Every feature ships README / ARCHITECTURE / API / TESTING docs sections.
 - Major decisions → ADR in `docs/adr/`.

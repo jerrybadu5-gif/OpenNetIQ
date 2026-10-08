@@ -1,0 +1,5 @@
+/// Route paths used with go_router.
+abstract final class AppRoutes {
+  static const String home = '/';
+  static const String signal = '/signal';
+}
