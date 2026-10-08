@@ -17,7 +17,7 @@ The app expects LibreSpeed-compatible endpoints under a base URL: `garbage.php?c
 | Use | Server |
 |---|---|
 | Development on a LAN | `python scripts/speedtest_dev_server.py --port 8080` then `http://<PC IP>:8080/backend/` (dev flavor allows plain HTTP) |
-| Regulatory measurements | Self-hosted container (#20), HTTPS, >= 1 Gbps uplink, in-country |
+| Regulatory measurements | Self-hosted container `infra/test-server` (`docs/features/test-server/`), HTTPS, >= 1 Gbit/s uplink, in-country |
 
 A build-time default can be set with `--dart-define=ONQ_SPEEDTEST_URL=https://.../backend/`.
 

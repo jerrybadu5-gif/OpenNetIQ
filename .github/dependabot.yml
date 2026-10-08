@@ -25,3 +25,8 @@ updates:
     schedule: {interval: weekly}
     target-branch: develop
     labels: [tech-debt, backend]
+  - package-ecosystem: docker
+    directory: /infra/test-server
+    schedule: {interval: weekly}
+    target-branch: develop
+    labels: [tech-debt, security]
