@@ -1,0 +1,34 @@
+# OpenNetIQ speed-test server (issue #20). Usage: docs/features/test-server/README.md
+services:
+  speedtest:
+    build: .
+    image: opennetiq/speedtest-server:0.1.0
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+      - "${HTTPS_PORT:-8443}:8443"
+    environment:
+      SPEEDTEST_GARBAGE_MIB: "${SPEEDTEST_GARBAGE_MIB:-100}"
+      SPEEDTEST_HTTPS: "${SPEEDTEST_HTTPS:-auto}"
+      SPEEDTEST_ACCESS_LOG: "${SPEEDTEST_ACCESS_LOG:-off}"
+    volumes:
+      # fullchain.pem + privkey.pem (e.g. from Let's Encrypt); empty = HTTP only.
+      - ./certs:/etc/nginx/certs:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=1200m,uid=101,gid=101,mode=0750
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+      start_interval: 2s

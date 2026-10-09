@@ -1,0 +1,6 @@
+server {
+    listen 8080 default_server reuseport backlog=4096;
+    #ipv6 listen [::]:8080 default_server reuseport backlog=4096;
+    server_name _;
+    include /etc/nginx/speedtest/endpoints.inc;
+}

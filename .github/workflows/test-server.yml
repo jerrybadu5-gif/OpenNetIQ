@@ -1,0 +1,38 @@
+name: Speed-test server
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ["infra/test-server/**", ".github/workflows/test-server.yml"]
+  pull_request:
+    paths: ["infra/test-server/**", ".github/workflows/test-server.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/test-server
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and start (HTTP)
+        run: docker compose up -d --build --wait --wait-timeout 60
+      - name: Smoke test (HTTP)
+        run: ./smoke_test.sh http://127.0.0.1:8080
+      - name: Enable HTTPS with a throwaway certificate
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=localhost" \
+            -keyout certs/privkey.pem -out certs/fullchain.pem
+          chmod 644 certs/*.pem
+          SPEEDTEST_HTTPS=required docker compose up -d --force-recreate --wait --wait-timeout 60
+      - name: Smoke test (HTTPS)
+        run: ./smoke_test.sh https://127.0.0.1:8443
+      - name: Logs
+        if: always()
+        run: docker compose logs --no-color
+      - name: Stop
+        if: always()
+        run: docker compose down

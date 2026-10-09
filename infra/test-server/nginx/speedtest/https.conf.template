@@ -1,0 +1,17 @@
+server {
+    listen 8443 ssl reuseport backlog=4096;
+    #ipv6 listen [::]:8443 ssl reuseport backlog=4096;
+    http2 on;
+    server_name _;
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1h;
+    ssl_session_tickets off;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    include /etc/nginx/speedtest/endpoints.inc;
+}
