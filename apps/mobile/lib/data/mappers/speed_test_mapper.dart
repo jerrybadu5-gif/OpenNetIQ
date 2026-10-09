@@ -23,7 +23,7 @@ abstract final class SpeedTestMapper {
   }
 
   static SpeedTestResult result(ChannelReader r) {
-    final status = SpeedTestStatus.fromWire(r.requireString('status'));
+    final status = TestStatus.fromWire(r.requireString('status'));
     if (status == null) throw const FormatException('Invalid "status"');
     return SpeedTestResult(
       status: status,

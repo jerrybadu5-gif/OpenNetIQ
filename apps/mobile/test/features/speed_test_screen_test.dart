@@ -130,7 +130,7 @@ void main() {
       state: const SpeedTestState(
         error: 'Result not saved: disk full',
         result: SpeedTestResult(
-          status: SpeedTestStatus.failed,
+          status: TestStatus.failed,
           method: 'http-mc-1.0',
           serverHost: 'h',
           streams: 4,

@@ -1,6 +1,8 @@
 /// Speed-test results (method `http-mc-1.0`, MEASUREMENT-METHODOLOGY.md §5).
 library;
 
+export 'package:opennetiq_mobile/domain/entities/test_status.dart';
+
 /// Statistics of one direction in Mbit/s (SI), bytes transferred.
 class ThroughputResult {
   const ThroughputResult({
@@ -18,22 +20,6 @@ class ThroughputResult {
   final double p90Mbps;
   final double peakMbps;
   final int bytes;
-}
-
-/// `speed_tests.status`.
-enum SpeedTestStatus {
-  ok,
-  partial,
-  failed;
-
-  String get wireValue => name;
-
-  static SpeedTestStatus? fromWire(String? value) {
-    for (final s in values) {
-      if (s.wireValue == value) return s;
-    }
-    return null;
-  }
 }
 
 enum SpeedTestPhase {
@@ -67,7 +53,7 @@ class SpeedTestResult {
     this.error,
   });
 
-  final SpeedTestStatus status;
+  final TestStatus status;
   final String method;
   final String serverHost;
   final int streams;

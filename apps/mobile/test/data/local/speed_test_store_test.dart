@@ -72,7 +72,7 @@ void main() {
 
   test('failed tests store nulls, newest first', () async {
     const failed = SpeedTestResult(
-      status: SpeedTestStatus.failed,
+      status: TestStatus.failed,
       method: 'http-mc-1.0',
       serverHost: 'h',
       streams: 4,

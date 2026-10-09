@@ -75,6 +75,9 @@ Multiple flags are sorted and joined with `|`.
 - ICMP: 20 echo requests, 200 ms interval, 56-byte payload, 2 s timeout.
 - TCP: 20 connects to server port 443, RTT = SYN→SYN/ACK as seen by connect().
 - KPIs: `min, max, mean, median, p95` (nearest-rank), `jitter_ms = mean(|RTTᵢ − RTTᵢ₋₁|)` over successful consecutive probes (IPDV, RFC 3393), `packet_loss_pct = lost / sent × 100`.
+- DNS: 20 standard A queries (recursion desired) over UDP/53 to the active network's first resolver, for the test server host name; RTT = send to matching response (any RCODE); 2 s timeout.
+- Targets: ICMP and TCP probe the speed-test server host (TCP on its URL port). Probes are sent on a fixed 200 ms schedule; a probe without answer within the timeout is lost.
+- ICMP uses the system `ping` (no root); replies are matched by sequence number, duplicates ignored.
 
 ## 7. References
 ITU-T E.800, G.1010, G.1020, P.863, Y.1540 · 3GPP TS 36.214, 36.133, 38.215, 38.133, 23.203, 32.450 · ETSI EG 202 057 · RFC 3393, 3550, 7946 · GSMA network benchmarking guidance.

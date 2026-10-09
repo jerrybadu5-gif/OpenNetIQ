@@ -102,6 +102,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.5 Latency Engine — `telecom`
 - ICMP via `/system/bin/ping` (no root required), TCP connect RTT, HTTP RTT, DNS lookup time.
 - Default: 20 probes, 200 ms interval. KPIs: min, max, mean, median, P95, **jitter = mean absolute difference of consecutive RTTs (IPDV, RFC 3393 / ITU-T Y.1540)**, packet loss % (ICMP).
+- Status: ICMP, TCP and DNS implemented in issue #21 (`docs/features/latency-test/`); HTTP RTT reserved. Charts/history: #22.
 
 #### 1.6 Local Storage (Drift / SQLite) — `mobile`
 - Schema: `database/mobile/schema_v1.sql` (sessions, samples, cell_observations, speed_tests, latency_tests, devices, app_settings).

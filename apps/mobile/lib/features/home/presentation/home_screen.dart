@@ -39,11 +39,12 @@ class HomeScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.speed),
           ),
-          const ListTile(
-            enabled: false,
-            leading: Icon(Icons.timer_outlined),
-            title: Text('Latency test'),
-            subtitle: Text('Coming in M1'),
+          ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: const Text('Latency test'),
+            subtitle: const Text('ICMP, TCP and DNS: jitter and packet loss'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.latency),
           ),
           ListTile(
             leading: const Icon(Icons.route),

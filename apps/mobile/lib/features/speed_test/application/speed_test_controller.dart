@@ -1,17 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/core/methodology.dart';
 import 'package:opennetiq_mobile/core/uuid7.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
-import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/network_type.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/entities/speed_test.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
-import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
-import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
+import 'package:opennetiq_mobile/features/recording/application/test_context.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
 
@@ -64,8 +61,6 @@ class SpeedTestController extends Notifier<SpeedTestState> {
     return const SpeedTestState();
   }
 
-  DateTime _now() => ref.read(clockProvider)();
-
   Future<void> saveServer(String url) async {
     await ref
         .read(settingsRepositoryProvider)
@@ -87,10 +82,11 @@ class SpeedTestController extends Notifier<SpeedTestState> {
       return;
     }
     state = const SpeedTestState(running: true);
-    final startedAt = _now();
-    final startRadio = await _awaitRadio();
+    final context = ref.read(testContextProvider);
+    final startedAt = context.now();
+    final startRadio = await context.awaitRadio(() => state.running);
     if (!state.running) return; // cancelled while waiting
-    final startLocation = _latestLocation();
+    final startLocation = context.latestLocation();
     final networks = <NetworkType>{?startRadio?.networkType};
 
     final outcome = Completer<SpeedTestResult?>();
@@ -188,32 +184,11 @@ class SpeedTestController extends Notifier<SpeedTestState> {
     }
   }
 
-  Future<RadioSnapshot?> _awaitRadio() async {
-    final deadline = _now().add(ref.read(speedTestRadioWaitProvider));
-    while (state.running) {
-      if (ref.read(radioSnapshotProvider) case AsyncData(:final value)) {
-        return value;
-      }
-      if (!_now().isBefore(deadline)) return null;
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    }
-    return null;
-  }
-
-  LocationStatus? _latestLocation() =>
-      switch (ref.read(locationStatusProvider)) {
-        AsyncData(:final value) => value,
-        _ => null,
-      };
-
   void _noteNetwork(Set<NetworkType> networks) {
-    if (ref.read(radioSnapshotProvider) case AsyncData(:final value)) {
-      networks.add(value.networkType);
-    }
+    final network = ref.read(testContextProvider).currentNetwork();
+    if (network != null) networks.add(network);
   }
 
-  /// Links the test to the open drive session, or wraps a stand-alone test
-  /// in a `single_test` session holding the start snapshot.
   Future<void> _persist({
     required String url,
     required SpeedTestResult result,
@@ -222,36 +197,14 @@ class SpeedTestController extends Notifier<SpeedTestState> {
     required LocationStatus? startLocation,
     required bool ratChanged,
   }) async {
-    String? sessionId;
-    String? measurementId;
-    final recording = ref.read(recordingControllerProvider);
-    final samples = ref.read(sampleRepositoryProvider);
-    final activeId = recording.sessionId;
-    if (recording.isActive && activeId != null) {
-      sessionId = activeId;
-      measurementId = await samples.latestMeasurementId(activeId);
-    } else if (startRadio != null) {
-      final info = await ref.read(deviceInfoSourceProvider).getDeviceInfo();
-      final deviceId = await ref
-          .read(deviceRegistryProvider)
-          .ensureDevice(info);
-      final sessions = ref.read(sessionRepositoryProvider);
-      final session = await sessions.createSession(
-        deviceId: deviceId,
-        name: RecordingController.defaultName(startedAt.toLocal())
-            .replaceFirst('Session', 'Speed test'),
-        type: SessionType.singleTest,
-        samplingIntervalMs: 1000,
-      );
-      await sessions.startRecording(session.id);
-      measurementId = await samples.recordSample(
-        sessionId: session.id,
-        radio: startRadio,
-        location: startLocation,
-      );
-      await sessions.finishRecording(session.id);
-      sessionId = session.id;
-    }
+    final link = await ref
+        .read(testContextProvider)
+        .link(
+          label: 'Speed test',
+          startedAt: startedAt,
+          radio: startRadio,
+          location: startLocation,
+        );
     await ref
         .read(speedTestStoreProvider)
         .saveSpeedTest(
@@ -261,19 +214,13 @@ class SpeedTestController extends Notifier<SpeedTestState> {
             methodologyVersion: methodologyVersion,
             serverId: url,
             result: result,
-            sessionId: sessionId,
-            measurementId: measurementId,
+            sessionId: link.sessionId,
+            measurementId: link.measurementId,
             ratChanged: ratChanged,
           ),
         );
   }
 }
-
-/// How long a test waits for the first radio snapshot before running
-/// without one (no permission, no telephony).
-final speedTestRadioWaitProvider = Provider<Duration>(
-  (ref) => const Duration(seconds: 3),
-);
 
 final speedTestControllerProvider =
     NotifierProvider<SpeedTestController, SpeedTestState>(

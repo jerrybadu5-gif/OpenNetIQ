@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_pipeline.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 
 /// Screen-independent background work of the app-wide container (ADR-014):
-/// recording pipeline, crash recovery, speed-test radio capture.
+/// recording pipeline, crash recovery, radio capture for active tests.
 void startAppRuntime(ProviderContainer container) {
   startRecordingRuntime(container);
-  container.listen<void>(speedTestPipelineProvider, (previous, next) {});
+  container
+    ..listen<void>(speedTestPipelineProvider, (previous, next) {})
+    ..listen<void>(latencyTestPipelineProvider, (previous, next) {});
 }

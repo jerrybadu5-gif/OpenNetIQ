@@ -135,12 +135,12 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 | timestamp | TEXT | UTC ISO 8601 | no | App | |
 | protocol | TEXT | enum | no | Engine | `icmp`, `tcp`, `http`, `dns` |
 | methodology_version | TEXT | semver | no | App | |
-| target | TEXT | – | no | Engine | Host probed |
+| target | TEXT | – | no | Engine | Host probed (`host:port` for TCP, `name via resolver` for DNS) |
 | probes_sent / probes_received | INTEGER | count | no | Engine | |
 | min_ms, max_ms, mean_ms, median_ms, p95_ms | REAL | ms | yes | Engine | RTT statistics |
 | jitter_ms | REAL | ms | yes | Engine | Mean absolute RTT variation |
 | packet_loss_pct | REAL | % | yes | Engine | `100 × (sent − received) / sent` |
-| raw_rtts_ms | TEXT | JSON array of ms | yes | Engine | For recomputation |
+| raw_rtts_ms | TEXT | JSON array of ms | yes | Engine | For recomputation; probe order, `null` = lost |
 | status | TEXT | enum | no | Engine | `ok`, `partial`, `failed` |
 | created_at | TEXT | UTC ISO 8601 | no | App | |
 
