@@ -103,6 +103,7 @@ void main() {
     expect(find.text('Session 2026-10-08 09:05'), findsOneWidget);
     expect(find.byType(FlutterMap), findsOneWidget);
     expect(find.text('Completed'), findsOneWidget);
+    expect(find.byTooltip('Export'), findsOneWidget);
     expect(find.text('2.35 km'), findsOneWidget);
     expect(find.text('2:05'), findsOneWidget);
     // 2 s -> 5 s misses 2 ticks: 5 recorded, 7 expected.
@@ -142,6 +143,7 @@ void main() {
     );
     expect(find.text('Recording in progress'), findsOneWidget);
     expect(find.byTooltip('Delete session'), findsNothing);
+    expect(find.byTooltip('Export'), findsNothing);
   });
 
   testWidgets('missing session and empty track', (tester) async {

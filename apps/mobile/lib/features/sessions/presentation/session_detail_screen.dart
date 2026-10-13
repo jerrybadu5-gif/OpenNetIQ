@@ -7,6 +7,7 @@ import 'package:opennetiq_mobile/domain/services/session_stats.dart';
 import 'package:opennetiq_mobile/domain/value_objects/signal_quality.dart';
 import 'package:opennetiq_mobile/features/map/presentation/track_map.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
+import 'package:opennetiq_mobile/features/export/presentation/export_sheet.dart';
 import 'package:opennetiq_mobile/features/sessions/application/session_detail_providers.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/widgets/signal_colors.dart';
@@ -41,6 +42,17 @@ class SessionDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(session?.name ?? 'Session'),
         actions: [
+          if (canDelete)
+            IconButton(
+              tooltip: 'Export',
+              icon: const Icon(Icons.ios_share),
+              onPressed: () => ExportSheet.show(
+                context,
+                ref,
+                sessionId: sessionId,
+                sessionName: session.name,
+              ),
+            ),
           if (canDelete)
             IconButton(
               tooltip: 'Delete session',

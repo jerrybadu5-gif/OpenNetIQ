@@ -119,6 +119,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.8 Export — `gis`
 - **CSV** (one row per sample, flat, documented column dictionary) and **GeoJSON** (RFC 7946, `Point` per sample + `LineString` per session).
 - Share via Android share sheet / Storage Access Framework. File naming: `opennetiq_<session-name>_<UTC-start>.csv`.
+- Status: CSV (samples + tests) and GeoJSON implemented in issue #23 (`docs/features/export/`, ADR-017 share sheet).
 
 #### 1.9 Privacy & Permissions — `security`
 - Runtime consent screen before any location/radio collection; permissions: `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION` (drive test only), `READ_PHONE_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE_LOCATION`.
