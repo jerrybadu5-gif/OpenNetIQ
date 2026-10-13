@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/domain/entities/speed_test.dart';
+import 'package:opennetiq_mobile/domain/entities/test_server.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
+import 'package:opennetiq_mobile/features/speed_test/presentation/throughput_chart.dart';
 
-/// Speed test (issue #19): server, start/cancel, live rate and results.
-/// Live curve, history and settings follow in #22.
+/// Speed test (issues #19, #22): server presets, start/cancel, live rate
+/// and throughput curve, result and history.
 class SpeedTestScreen extends ConsumerWidget {
   const SpeedTestScreen({super.key});
 
@@ -35,6 +38,7 @@ class SpeedTestScreen extends ConsumerWidget {
         children: [
           ServerCard(
             current: server,
+            presets: ref.watch(testServerPresetsProvider),
             enabled: !state.running,
             onSave: controller.saveServer,
           ),
@@ -72,6 +76,10 @@ class SpeedTestScreen extends ConsumerWidget {
               ),
             ),
           ),
+          ThroughputChart(
+            download: state.downloadCurve,
+            upload: state.uploadCurve,
+          ),
           if (error != null)
             Card(
               color: theme.colorScheme.errorContainer,
@@ -88,6 +96,8 @@ class SpeedTestScreen extends ConsumerWidget {
             'use several hundred MB of mobile data on fast networks.',
             style: theme.textTheme.bodySmall,
           ),
+          const SizedBox(height: 16),
+          const SpeedHistoryCard(),
         ],
       ),
     );
@@ -100,10 +110,12 @@ class ServerCard extends StatefulWidget {
     required this.current,
     required this.enabled,
     required this.onSave,
+    this.presets = const [],
     super.key,
   });
 
   final String? current;
+  final List<TestServer> presets;
   final bool enabled;
   final Future<void> Function(String url) onSave;
 
@@ -142,6 +154,12 @@ class _ServerCardState extends State<ServerCard> {
     return null;
   }
 
+  Future<void> _choose(TestServer preset) async {
+    _url.text = preset.url;
+    setState(() => _error = null);
+    await widget.onSave(preset.url);
+  }
+
   Future<void> _save() async {
     final error = validate(_url.text);
     setState(() => _error = error);
@@ -150,6 +168,7 @@ class _ServerCardState extends State<ServerCard> {
 
   @override
   Widget build(BuildContext context) {
+    final preset = presetFor(widget.presets, widget.current);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -164,8 +183,30 @@ class _ServerCardState extends State<ServerCard> {
                 labelText: 'Test server URL',
                 hintText: 'https://speed.example.org/backend/',
                 errorText: _error,
+                suffixIcon: widget.presets.isEmpty
+                    ? null
+                    : PopupMenuButton<TestServer>(
+                        tooltip: 'Server presets',
+                        enabled: widget.enabled,
+                        icon: const Icon(Icons.list),
+                        onSelected: _choose,
+                        itemBuilder: (context) => [
+                          for (final p in widget.presets)
+                            PopupMenuItem(value: p, child: Text(p.name)),
+                        ],
+                      ),
               ),
             ),
+            if (preset?.kind == TestServerKind.public)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Public server: measures the international path, not '
+                  'the operator network. Use a controlled server for '
+                  'benchmarking.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: widget.enabled ? _save : null,
@@ -246,6 +287,72 @@ class ResultCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Stored speed tests, newest first; tap for the full result.
+class SpeedHistoryCard extends ConsumerWidget {
+  const SpeedHistoryCard({super.key});
+
+  static String summary(SpeedTestResult r) =>
+      'Down ${SpeedTestScreen.mbps(r.download?.meanMbps)} · '
+      'Up ${SpeedTestScreen.mbps(r.upload?.meanMbps)}';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final history = ref.watch(speedTestHistoryProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('History', style: theme.textTheme.titleMedium),
+        switch (history) {
+          AsyncData(:final value) when value.isEmpty => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('No tests yet.'),
+          ),
+          AsyncData(:final value) => Card(
+            child: Column(
+              children: [
+                for (final record in value)
+                  ListTile(
+                    title: Text(summary(record.result)),
+                    subtitle: Text(
+                      '${formatLocalDateTime(record.timestamp)} · '
+                      '${record.result.serverHost} · '
+                      '${record.result.status.wireValue}',
+                    ),
+                    trailing: record.ratChanged
+                        ? const Icon(
+                            Icons.swap_horiz,
+                            semanticLabel: 'RAT changed',
+                          )
+                        : null,
+                    onTap: () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (context) => SafeArea(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(8),
+                          child: ResultCard(
+                            result: record.result,
+                            ratChanged: record.ratChanged,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          AsyncError(:final error) => Text('Could not load history: $error'),
+          _ => const Padding(
+            padding: EdgeInsets.all(8),
+            child: LinearProgressIndicator(),
+          ),
+        },
+      ],
     );
   }
 }

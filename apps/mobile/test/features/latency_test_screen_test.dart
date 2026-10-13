@@ -1,9 +1,11 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opennetiq_mobile/domain/entities/latency_test.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
 import 'package:opennetiq_mobile/features/latency_test/presentation/latency_test_screen.dart';
+import 'package:opennetiq_mobile/features/latency_test/presentation/rtt_chart.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
 
 import '../fixtures/latency_fixtures.dart';
@@ -30,6 +32,7 @@ void main() {
     WidgetTester tester, {
     LatencyTestState state = const LatencyTestState(),
     String? server = 'https://speed.example.org/backend/',
+    List<LatencyRecord> history = const [],
   }) async {
     tester.view.physicalSize = const Size(1080, 3000);
     tester.view.devicePixelRatio = 1;
@@ -40,6 +43,7 @@ void main() {
         overrides: [
           latencyTestControllerProvider.overrideWith(() => stub),
           speedTestServerProvider.overrideWith((ref) async => server),
+          latencyHistoryProvider.overrideWith((ref) => Stream.value(history)),
         ],
         child: const MaterialApp(home: LatencyTestScreen()),
       ),
@@ -82,6 +86,7 @@ void main() {
     expect(find.text('TCP connect'), findsOneWidget);
     expect(find.text('2 / 20 probes'), findsOneWidget);
     expect(find.text('Last: 31.2 ms'), findsOneWidget);
+    expect(find.byType(RttChart), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     expect(stub.cancels, 1);
   });
@@ -116,5 +121,32 @@ void main() {
     expect(find.text('100 % (0/20)'), findsOneWidget);
     expect(find.text('no reply'), findsOneWidget);
     expect(find.text('Results not saved: disk full'), findsOneWidget);
+    expect(find.byType(LineChart), findsNWidgets(2)); // incl. all-lost
+    expect(find.text('Lost'), findsNWidgets(2));
+  });
+
+  testWidgets('history lists rows and opens the result', (tester) async {
+    await pump(
+      tester,
+      history: [
+        LatencyRecord(
+          id: 'a',
+          timestamp: DateTime.utc(2026, 10, 13, 2),
+          methodologyVersion: '1.0',
+          result: latencyResult(),
+        ),
+      ],
+    );
+    const row = 'TCP connect · median 27.4 ms · loss 20 %';
+    expect(find.text(row), findsOneWidget);
+    await tester.tap(find.text(row));
+    await tester.pumpAndSettle();
+    expect(find.text('TCP connect: ok'), findsOneWidget);
+    expect(find.byType(RttChart), findsOneWidget);
+  });
+
+  testWidgets('empty history', (tester) async {
+    await pump(tester);
+    expect(find.text('No tests yet.'), findsOneWidget);
   });
 }
