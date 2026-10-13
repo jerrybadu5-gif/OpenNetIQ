@@ -7,6 +7,7 @@ import 'package:opennetiq_mobile/features/location/application/location_provider
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_providers.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
+import 'package:opennetiq_mobile/features/recording/application/test_context.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
@@ -38,9 +39,7 @@ void main() {
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),
         speedTestEngineProvider.overrideWithValue(engine),
-        speedTestRadioWaitProvider.overrideWithValue(
-          const Duration(seconds: 1),
-        ),
+        testRadioWaitProvider.overrideWithValue(const Duration(seconds: 1)),
         radioRepositoryProvider.overrideWithValue(
           permitted
               ? radio
@@ -125,7 +124,7 @@ void main() {
 
     final s = state();
     expect(s.running, isFalse);
-    expect(s.result!.status, SpeedTestStatus.ok);
+    expect(s.result!.status, TestStatus.ok);
     expect(s.downloadCurve, hasLength(1));
     expect(s.uploadCurve, hasLength(1));
     expect(s.ratChanged, isFalse);

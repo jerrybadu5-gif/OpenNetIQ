@@ -90,7 +90,7 @@ class DriftSpeedTestStore implements SpeedTestStore, SettingsRepository {
       serverId: row.serverId,
       ratChanged: row.ratChanged,
       result: SpeedTestResult(
-        status: SpeedTestStatus.fromWire(row.status) ?? SpeedTestStatus.failed,
+        status: TestStatus.fromWire(row.status) ?? TestStatus.failed,
         method: row.method,
         serverHost: row.serverHost,
         streams: row.streams,

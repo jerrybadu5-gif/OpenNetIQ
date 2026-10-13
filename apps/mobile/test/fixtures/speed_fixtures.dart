@@ -31,7 +31,7 @@ Map<String, Object?> resultPayload({
 };
 
 const okResult = SpeedTestResult(
-  status: SpeedTestStatus.ok,
+  status: TestStatus.ok,
   method: 'http-mc-1.0',
   serverHost: 'speed.example.org',
   streams: 4,

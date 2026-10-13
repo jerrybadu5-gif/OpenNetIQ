@@ -39,7 +39,7 @@ void main() {
       final r = (SpeedTestMapper.fromChannel(
         resultPayload(),
       ) as SpeedTestCompleted).result;
-      expect(r.status, SpeedTestStatus.ok);
+      expect(r.status, TestStatus.ok);
       expect(r.method, 'http-mc-1.0');
       expect(r.serverHost, 'speed.example.org');
       expect(r.streams, 4);
@@ -60,7 +60,7 @@ void main() {
           error: 'upload: HTTP 500',
         ),
       ) as SpeedTestCompleted).result;
-      expect(r.status, SpeedTestStatus.partial);
+      expect(r.status, TestStatus.partial);
       expect(r.upload, isNull);
       expect(r.error, 'upload: HTTP 500');
     });

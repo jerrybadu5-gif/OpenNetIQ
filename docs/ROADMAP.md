@@ -97,11 +97,12 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
   2. **M-Lab ndt7** (public, Apache-2.0 client protocol) — fallback when no self-hosted server is configured.
 - Method v1.0: multi-connection HTTP (default 4 parallel TCP streams), 10 s per direction, 2 s ramp-up excluded, 100 ms throughput sampling. Reports mean, median, P10, P90, peak (burst) and bytes transferred. Also records TCP connect time and DNS resolution time.
 - Radio snapshot taken at start, mid and end of each test and linked to the result.
-- Status: engine, persistence and a basic test screen implemented in issue #19 (`docs/features/speed-test/`); dev server `scripts/speedtest_dev_server.py`. Production server container implemented in #20 (`infra/test-server`, `docs/features/test-server/`, ADR-016); ndt7 fallback deferred until consent (#24). Full UI: #22.
+- Status: engine, persistence and a basic test screen implemented in issue #19 (`docs/features/speed-test/`); dev server `scripts/speedtest_dev_server.py`. Production server container implemented in #20 (`infra/test-server`, `docs/features/test-server/`, ADR-016); ndt7 fallback deferred until consent (#24). Throughput curve, history and server presets: #22 (`docs/features/results-ui/`).
 
 #### 1.5 Latency Engine — `telecom`
 - ICMP via `/system/bin/ping` (no root required), TCP connect RTT, HTTP RTT, DNS lookup time.
 - Default: 20 probes, 200 ms interval. KPIs: min, max, mean, median, P95, **jitter = mean absolute difference of consecutive RTTs (IPDV, RFC 3393 / ITU-T Y.1540)**, packet loss % (ICMP).
+- Status: ICMP, TCP and DNS implemented in issue #21 (`docs/features/latency-test/`); HTTP RTT reserved. RTT chart and history: #22 (`docs/features/results-ui/`).
 
 #### 1.6 Local Storage (Drift / SQLite) — `mobile`
 - Schema: `database/mobile/schema_v1.sql` (sessions, samples, cell_observations, speed_tests, latency_tests, devices, app_settings).

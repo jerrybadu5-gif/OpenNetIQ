@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -16,6 +17,8 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.opennetiq.measurement.latency.LatencyConfig
+import org.opennetiq.measurement.latency.LatencyEngine
 import org.opennetiq.measurement.location.LocationCollector
 import org.opennetiq.measurement.radio.RadioCollector
 import org.opennetiq.measurement.service.DriveTestService
@@ -28,7 +31,7 @@ import org.opennetiq.measurement.speed.SpeedTestResult
 /**
  * Native side of the measurement platform channels.
  * Contracts: docs/features/signal-monitor/API.md, docs/features/location/API.md,
- * docs/features/drive-test/API.md, docs/features/speed-test/API.md (ADR-013, ADR-014).
+ * docs/features/drive-test/API.md, docs/features/speed-test/API.md, docs/features/latency-test/API.md (ADR-013, ADR-014).
  * Lives as long as the application-owned engine; the activity is optional and
  * only needed for permission dialogs.
  * Never exposes IMEI, IMSI, ICCID, MSISDN or other subscriber identifiers.
@@ -47,6 +50,8 @@ class MeasurementBridge(
     private val speedChannel = EventChannel(messenger, SPEED_CHANNEL)
     private val mainHandler = Handler(Looper.getMainLooper())
     private var speedEngine: SpeedTestEngine? = null
+    private val latencyChannel = EventChannel(messenger, LATENCY_CHANNEL)
+    private var latencyEngine: LatencyEngine? = null
     private var activity: Activity? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
 
@@ -111,9 +116,56 @@ class MeasurementBridge(
         }
     }
 
+    /**
+     * Latency test (issue #21): listening runs the configured protocols in
+     * order; events `protocol`, `probe`, one `result` per protocol, then end
+     * of stream. Cancelling the subscription cancels the test.
+     */
+    private val latencyStreamHandler = object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+            val config = try {
+                LatencyConfig.fromChannel(arguments, dnsServer())
+            } catch (e: IllegalArgumentException) {
+                events.error("INVALID_CONFIG", e.message ?: "Invalid latency configuration", null)
+                events.endOfStream()
+                return
+            }
+            latencyEngine?.cancel()
+            val engine = LatencyEngine(config)
+            latencyEngine = engine
+            fun emit(event: Map<String, Any?>) {
+                mainHandler.post { if (latencyEngine === engine) events.success(event) }
+            }
+            val listener = object : LatencyEngine.Listener {
+                override fun onProtocol(protocol: String) {
+                    emit(mapOf("type" to "protocol", "protocol" to protocol))
+                }
+
+                override fun onProbe(protocol: String, seq: Int, rttMs: Double?) {
+                    emit(mapOf("type" to "probe", "protocol" to protocol, "seq" to seq, "rtt_ms" to rttMs))
+                }
+            }
+            Thread({
+                val results = engine.run(listener)
+                mainHandler.post {
+                    if (latencyEngine !== engine) return@post
+                    results.forEach { events.success(it.toMap()) }
+                    events.endOfStream()
+                    latencyEngine = null
+                }
+            }, "onq-latency-test").apply { isDaemon = true }.start()
+        }
+
+        override fun onCancel(arguments: Any?) {
+            latencyEngine?.cancel()
+            latencyEngine = null
+        }
+    }
+
     init {
         controlChannel.setMethodCallHandler(this)
         speedChannel.setStreamHandler(speedStreamHandler)
+        latencyChannel.setStreamHandler(latencyStreamHandler)
         radioChannel.setStreamHandler(this)
         locationChannel.setStreamHandler(locationStreamHandler)
         DriveTestServiceEvents.listener = this
@@ -201,6 +253,9 @@ class MeasurementBridge(
         speedChannel.setStreamHandler(null)
         speedEngine?.cancel()
         speedEngine = null
+        latencyChannel.setStreamHandler(null)
+        latencyEngine?.cancel()
+        latencyEngine = null
         if (DriveTestServiceEvents.listener === this) DriveTestServiceEvents.listener = null
         pendingPermissionResult?.error("CANCELLED", "Bridge disposed", null)
         pendingPermissionResult = null
@@ -231,6 +286,13 @@ class MeasurementBridge(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         if (isGranted(Manifest.permission.POST_NOTIFICATIONS)) return
         activity?.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_REQUEST_CODE)
+    }
+
+    /** First resolver of the active network (for DNS latency probes). */
+    private fun dnsServer(): String? {
+        val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return null
+        val network = cm.activeNetwork ?: return null
+        return cm.getLinkProperties(network)?.dnsServers?.firstOrNull()?.hostAddress
     }
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
@@ -313,6 +375,7 @@ class MeasurementBridge(
         const val RADIO_CHANNEL = "org.opennetiq/radio"
         const val LOCATION_CHANNEL = "org.opennetiq/location"
         const val SPEED_CHANNEL = "org.opennetiq/speed"
+        const val LATENCY_CHANNEL = "org.opennetiq/latency"
         private const val PERMISSION_REQUEST_CODE = 0x4E51 // "NQ"
         private const val NOTIFICATION_REQUEST_CODE = 0x4E53
         private const val DEFAULT_INTERVAL_MS = 1_000L

@@ -9,11 +9,13 @@ abstract final class MeasurementChannels {
   static const String radioName = 'org.opennetiq/radio';
   static const String locationName = 'org.opennetiq/location';
   static const String speedName = 'org.opennetiq/speed';
+  static const String latencyName = 'org.opennetiq/latency';
 
   static const MethodChannel control = MethodChannel(controlName);
   static const EventChannel radio = EventChannel(radioName);
   static const EventChannel location = EventChannel(locationName);
   static const EventChannel speed = EventChannel(speedName);
+  static const EventChannel latency = EventChannel(latencyName);
 
   static const String getPermissionStatus = 'getPermissionStatus';
   static const String requestPermissions = 'requestPermissions';

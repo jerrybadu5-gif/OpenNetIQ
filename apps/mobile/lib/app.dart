@@ -5,6 +5,7 @@ import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/core/flavor.dart';
 import 'package:opennetiq_mobile/core/theme/app_theme.dart';
 import 'package:opennetiq_mobile/features/drive_test/presentation/drive_test_screen.dart';
+import 'package:opennetiq_mobile/features/latency_test/presentation/latency_test_screen.dart';
 import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
@@ -21,6 +22,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'signal',
             builder: (context, state) => const SignalMonitorScreen(),
+          ),
+          GoRoute(
+            path: 'latency',
+            builder: (context, state) => const LatencyTestScreen(),
           ),
           GoRoute(
             path: 'speed',
