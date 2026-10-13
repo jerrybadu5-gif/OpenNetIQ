@@ -13,7 +13,7 @@ final locationRepositoryProvider = Provider<LocationRepository>(
 final locationStatusProvider = StreamProvider<LocationStatus>(
   (ref) {
     final permissions = ref.watch(radioPermissionsProvider);
-    if (permissions case AsyncData(:final value) when value.location) {
+    if (permissions case AsyncData(:final value) when value.canLocate) {
       return ref
           .watch(locationRepositoryProvider)
           .watchLocation(interval: ref.watch(radioIntervalProvider));

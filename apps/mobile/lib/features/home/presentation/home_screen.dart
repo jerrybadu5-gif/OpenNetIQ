@@ -12,7 +12,16 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final flavor = ref.watch(flavorProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(flavor.label)),
+      appBar: AppBar(
+        title: Text(flavor.label),
+        actions: [
+          IconButton(
+            tooltip: 'Privacy',
+            icon: const Icon(Icons.privacy_tip_outlined),
+            onPressed: () => context.push(AppRoutes.privacy),
+          ),
+        ],
+      ),
       body: ListView(
         children: [
           const RecordingBanner(),

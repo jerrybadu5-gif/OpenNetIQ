@@ -8,6 +8,7 @@ import 'package:opennetiq_mobile/features/recording/application/recording_contro
 import 'package:opennetiq_mobile/features/recording/application/recording_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
 import '../fixtures/recording_fixtures.dart';
 
@@ -16,7 +17,10 @@ void main() {
     testWidgets('app shows ${flavor.name} title', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [flavorProvider.overrideWithValue(flavor)],
+          overrides: [
+            grantedConsentOverride,
+            flavorProvider.overrideWithValue(flavor),
+          ],
           child: const OpenNetIqApp(),
         ),
       );
@@ -31,6 +35,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          grantedConsentOverride,
           recordingControllerProvider.overrideWith(
             () => StubRecordingController(
               const RecordingState(
@@ -60,7 +65,12 @@ void main() {
   });
 
   testWidgets('no banner while idle', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: OpenNetIqApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [grantedConsentOverride],
+        child: const OpenNetIqApp(),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Recording'), findsNothing);
     expect(find.text('Drive test'), findsOneWidget);

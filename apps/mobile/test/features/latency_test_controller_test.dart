@@ -11,6 +11,7 @@ import 'package:opennetiq_mobile/features/recording/application/test_context.dar
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/db_fixtures.dart';
 import '../fixtures/latency_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
@@ -35,6 +36,7 @@ void main() {
     radio = ControlledRadioRepository();
     container = ProviderContainer(
       overrides: [
+        grantedConsentOverride,
         appDatabaseProvider.overrideWithValue(db),
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),

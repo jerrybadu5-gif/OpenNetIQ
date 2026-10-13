@@ -10,6 +10,7 @@ import 'package:opennetiq_mobile/features/location/application/location_provider
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
 
@@ -24,6 +25,7 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        grantedConsentOverride,
         radioRepositoryProvider.overrideWithValue(repo),
         locationRepositoryProvider.overrideWithValue(
           location ?? FakeLocationRepository(statuses: [locationStatus()]),
@@ -173,6 +175,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          grantedConsentOverride,
           radioRepositoryProvider.overrideWithValue(repo),
           locationRepositoryProvider.overrideWithValue(
             FakeLocationRepository(statuses: [locationStatus()]),

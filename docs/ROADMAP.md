@@ -124,6 +124,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.9 Privacy & Permissions — `security`
 - Runtime consent screen before any location/radio collection; permissions: `ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION` (drive test only), `READ_PHONE_STATE`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE_LOCATION`.
 - Never collect IMEI, IMSI, phone number, MSISDN, contacts, messages. Device identified by random install UUID.
+- Status: consent gate, Privacy screen (withdraw, delete all data, consent history) implemented in issue #24 (`docs/features/privacy/`, ADR-018). ndt7 consent scope follows with the ndt7 client.
 
 #### 1.10 QA & Field Validation — `telecom`
 - Unit tests: mappers (ECI→eNB, NCI→gNB), validity filters, KPI math (jitter, percentiles), CSV/GeoJSON writers. Coverage ≥ 80 %.
