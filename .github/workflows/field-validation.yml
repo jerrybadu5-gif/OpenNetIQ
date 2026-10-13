@@ -1,0 +1,28 @@
+name: Field validation tools
+on:
+  push:
+    branches: [main, develop]
+    paths: ["tests/field-validation/**", ".github/workflows/field-validation.yml"]
+  pull_request:
+    paths: ["tests/field-validation/**", ".github/workflows/field-validation.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: field-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tests/field-validation
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: {python-version: "3.12"}
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: Pytest + coverage
+        run: pytest --cov=onq_validation --cov-report=term-missing --cov-fail-under=80

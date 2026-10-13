@@ -130,6 +130,7 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 - Unit tests: mappers (ECI→eNB, NCI→gNB), validity filters, KPI math (jitter, percentiles), CSV/GeoJSON writers. Coverage ≥ 80 %.
 - Instrumented tests on ≥ 3 chipsets (Qualcomm, MediaTek, Samsung Exynos).
 - **Field validation:** 3 drive routes in Port Moresby (urban, suburban, highway) against a reference (second device running a reference app such as Network Cell Info / G-NetTrack, or a commercial tool where available).
+- Status: protocol, results template and `onq-validate` checks for every measurable exit criterion implemented in issue #25 (`docs/features/field-validation/`, `tests/field-validation/`). Field drives pending.
 
 **Exit criteria (M1 release `v0.1.0`)**
 - [ ] RSRP/RSRQ agree with reference within **±2 dB** median absolute difference on the same device model
