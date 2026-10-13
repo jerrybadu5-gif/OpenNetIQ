@@ -73,8 +73,7 @@ class DriftLatencyStore implements LatencyStore {
           parseUtc(row.timestamp) ?? DateTime.fromMillisecondsSinceEpoch(0),
       methodologyVersion: row.methodologyVersion,
       result: LatencyResult(
-        protocol:
-            LatencyProtocol.fromWire(row.protocol) ?? LatencyProtocol.tcp,
+        protocol: LatencyProtocol.fromWire(row.protocol) ?? LatencyProtocol.tcp,
         method: 'lat-1.0',
         target: row.target,
         probesSent: row.probesSent,

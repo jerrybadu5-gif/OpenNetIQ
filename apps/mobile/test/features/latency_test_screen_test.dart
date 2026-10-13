@@ -67,9 +67,7 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('running shows protocol, probe count and cancel', (
-    tester,
-  ) async {
+  testWidgets('running shows protocol, probe count and cancel', (tester) async {
     final stub = await pump(
       tester,
       state: const LatencyTestState(

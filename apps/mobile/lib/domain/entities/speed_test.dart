@@ -1,6 +1,8 @@
 /// Speed-test results (method `http-mc-1.0`, MEASUREMENT-METHODOLOGY.md §5).
 library;
 
+import 'package:opennetiq_mobile/domain/entities/test_status.dart';
+
 export 'package:opennetiq_mobile/domain/entities/test_status.dart';
 
 /// Statistics of one direction in Mbit/s (SI), bytes transferred.

@@ -53,9 +53,7 @@ class LatencyTestScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    state.running
-                        ? protocol?.label ?? 'Starting...'
-                        : 'Ready',
+                    state.running ? protocol?.label ?? 'Starting...' : 'Ready',
                     style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),

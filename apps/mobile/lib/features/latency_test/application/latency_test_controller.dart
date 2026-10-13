@@ -130,19 +130,17 @@ class LatencyTestController extends Notifier<LatencyTestState> {
         radio: startRadio,
         location: startLocation,
       );
-      await ref
-          .read(latencyStoreProvider)
-          .saveLatencyTests([
-            for (final r in results)
-              LatencyRecord(
-                id: uuid7(),
-                timestamp: startedAt,
-                methodologyVersion: methodologyVersion,
-                result: r,
-                sessionId: link.sessionId,
-                measurementId: link.measurementId,
-              ),
-          ]);
+      await ref.read(latencyStoreProvider).saveLatencyTests([
+        for (final r in results)
+          LatencyRecord(
+            id: uuid7(),
+            timestamp: startedAt,
+            methodologyVersion: methodologyVersion,
+            result: r,
+            sessionId: link.sessionId,
+            measurementId: link.measurementId,
+          ),
+      ]);
     } on Object catch (e) {
       error = 'Results not saved: $e';
     }

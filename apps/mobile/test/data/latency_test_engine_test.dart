@@ -36,10 +36,9 @@ void main() {
       expect(probe.seq, 3);
       expect(probe.rttMs, isNull);
 
-      final r =
-          (LatencyTestMapper.fromChannel(latencyResultPayload())
-                  as LatencyCompleted)
-              .result;
+      final r = (LatencyTestMapper.fromChannel(
+        latencyResultPayload(),
+      ) as LatencyCompleted).result;
       expect(r.protocol, LatencyProtocol.tcp);
       expect(r.method, 'lat-1.0');
       expect(r.target, 'speed.example.org:443');
@@ -53,17 +52,14 @@ void main() {
     });
 
     test('integer RTTs and failure reasons', () {
-      final r =
-          (LatencyTestMapper.fromChannel(
-                    latencyResultPayload(
-                      protocol: 'icmp',
-                      status: 'failed',
-                      rtts: [null, 7],
-                      error: 'ping: unknown host',
-                    ),
-                  )
-                  as LatencyCompleted)
-              .result;
+      final r = (LatencyTestMapper.fromChannel(
+        latencyResultPayload(
+          protocol: 'icmp',
+          status: 'failed',
+          rtts: [null, 7],
+          error: 'ping: unknown host',
+        ),
+      ) as LatencyCompleted).result;
       expect(r.rawRttsMs, [null, 7.0]);
       expect(r.status, TestStatus.failed);
       expect(r.error, 'ping: unknown host');
@@ -87,14 +83,14 @@ void main() {
   });
 
   test('server URL gives the probe target', () {
-    expect(
-      LatencyConfig.targetOf('https://speed.example.org/backend/'),
-      (host: 'speed.example.org', port: 443),
-    );
-    expect(
-      LatencyConfig.targetOf('http://192.168.1.10:8080/backend/'),
-      (host: '192.168.1.10', port: 8080),
-    );
+    expect(LatencyConfig.targetOf('https://speed.example.org/backend/'), (
+      host: 'speed.example.org',
+      port: 443,
+    ));
+    expect(LatencyConfig.targetOf('http://192.168.1.10:8080/backend/'), (
+      host: '192.168.1.10',
+      port: 8080,
+    ));
     expect(LatencyConfig.targetOf('ftp://h/'), isNull);
     expect(LatencyConfig.targetOf('nonsense'), isNull);
   });
@@ -167,9 +163,7 @@ void main() {
         onCancel: (arguments) => cancelled = true,
       ),
     );
-    final sub = engine
-        .run(const LatencyConfig(host: 'h'))
-        .listen((_) {});
+    final sub = engine.run(const LatencyConfig(host: 'h')).listen((_) {});
     await pumpEventQueue();
     await sub.cancel();
     await pumpEventQueue();

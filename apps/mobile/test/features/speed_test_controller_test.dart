@@ -39,9 +39,7 @@ void main() {
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),
         speedTestEngineProvider.overrideWithValue(engine),
-        testRadioWaitProvider.overrideWithValue(
-          const Duration(seconds: 1),
-        ),
+        testRadioWaitProvider.overrideWithValue(const Duration(seconds: 1)),
         radioRepositoryProvider.overrideWithValue(
           permitted
               ? radio

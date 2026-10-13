@@ -79,52 +79,55 @@ void main() {
     expect(engine.configs, isEmpty);
   });
 
-  test('probes the server host and port, stores one row per protocol', () async {
-    final run = (await begin()).run;
-    final config = engine.configs.single;
-    expect(config.host, 'speed.example.org');
-    expect(config.port, 8443);
-    expect(config.protocols, LatencyProtocol.values);
-    expect(config.probes, 20);
-    expect(state().target, 'speed.example.org:8443');
+  test(
+    'probes the server host and port, stores one row per protocol',
+    () async {
+      final run = (await begin()).run;
+      final config = engine.configs.single;
+      expect(config.host, 'speed.example.org');
+      expect(config.port, 8443);
+      expect(config.protocols, LatencyProtocol.values);
+      expect(config.probes, 20);
+      expect(state().target, 'speed.example.org:8443');
 
-    engine
-      ..emit(const LatencyProtocolStarted(LatencyProtocol.icmp))
-      ..emit(const LatencyProbe(LatencyProtocol.icmp, 1, 21.0))
-      ..emit(const LatencyProbe(LatencyProtocol.icmp, 2, null));
-    await pumpEventQueue();
-    expect(state().protocol, LatencyProtocol.icmp);
-    expect(state().probes, hasLength(2));
+      engine
+        ..emit(const LatencyProtocolStarted(LatencyProtocol.icmp))
+        ..emit(const LatencyProbe(LatencyProtocol.icmp, 1, 21.0))
+        ..emit(const LatencyProbe(LatencyProtocol.icmp, 2, null));
+      await pumpEventQueue();
+      expect(state().protocol, LatencyProtocol.icmp);
+      expect(state().probes, hasLength(2));
 
-    engine
-      ..emit(LatencyCompleted(latencyResult(protocol: LatencyProtocol.icmp)))
-      ..emit(const LatencyProtocolStarted(LatencyProtocol.tcp));
-    await pumpEventQueue();
-    expect(state().probes, isEmpty); // reset per protocol
-    expect(state().results, hasLength(1));
+      engine
+        ..emit(LatencyCompleted(latencyResult(protocol: LatencyProtocol.icmp)))
+        ..emit(const LatencyProtocolStarted(LatencyProtocol.tcp));
+      await pumpEventQueue();
+      expect(state().probes, isEmpty); // reset per protocol
+      expect(state().results, hasLength(1));
 
-    engine.emit(LatencyCompleted(latencyResult()));
-    await engine.finish();
-    await run;
+      engine.emit(LatencyCompleted(latencyResult()));
+      await engine.finish();
+      await run;
 
-    expect(state().running, isFalse);
-    expect(state().results.map((r) => r.protocol), [
-      LatencyProtocol.icmp,
-      LatencyProtocol.tcp,
-    ]);
-    expect(state().error, isNull);
+      expect(state().running, isFalse);
+      expect(state().results.map((r) => r.protocol), [
+        LatencyProtocol.icmp,
+        LatencyProtocol.tcp,
+      ]);
+      expect(state().error, isNull);
 
-    final rows = await db.select(db.latencyTests).get();
-    expect(rows, hasLength(2));
-    expect(rows.map((r) => r.sessionId).toSet(), hasLength(1));
-    expect(rows.first.measurementId, isNotNull);
-    expect(rows.first.methodologyVersion, '1.0.0');
-    final session = await container
-        .read(sessionRepositoryProvider)
-        .getSession(rows.first.sessionId!);
-    expect(session!.type, SessionType.singleTest);
-    expect(session.name, startsWith('Latency test '));
-  });
+      final rows = await db.select(db.latencyTests).get();
+      expect(rows, hasLength(2));
+      expect(rows.map((r) => r.sessionId).toSet(), hasLength(1));
+      expect(rows.first.measurementId, isNotNull);
+      expect(rows.first.methodologyVersion, '1.0.0');
+      final session = await container
+          .read(sessionRepositoryProvider)
+          .getSession(rows.first.sessionId!);
+      expect(session!.type, SessionType.singleTest);
+      expect(session.name, startsWith('Latency test '));
+    },
+  );
 
   test('cancel stores nothing', () async {
     final run = (await begin()).run;

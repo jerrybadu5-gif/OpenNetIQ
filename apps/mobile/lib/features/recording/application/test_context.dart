@@ -48,14 +48,13 @@ class TestContextService {
         _ => null,
       };
 
-  NetworkType? currentNetwork() =>
-      switch (_ref.read(radioSnapshotProvider)) {
-        AsyncData(:final value) => value.networkType,
-        _ => null,
-      };
+  NetworkType? currentNetwork() => switch (_ref.read(radioSnapshotProvider)) {
+    AsyncData(:final value) => value.networkType,
+    _ => null,
+  };
 
   /// Links to the open drive session (its latest sample), or wraps a
-  /// stand-alone test in a `single_test` session named "[label] <date>"
+  /// stand-alone test in a `single_test` session named "`[label] <date>`"
   /// holding the start snapshot. Unlinked when there is no radio data.
   Future<TestLink> link({
     required String label,
@@ -78,9 +77,8 @@ class TestContextService {
     final sessions = _ref.read(sessionRepositoryProvider);
     final session = await sessions.createSession(
       deviceId: deviceId,
-      name: RecordingController.defaultName(
-        startedAt.toLocal(),
-      ).replaceFirst('Session', label),
+      name: RecordingController.defaultName(startedAt.toLocal())
+          .replaceFirst('Session', label),
       type: SessionType.singleTest,
       samplingIntervalMs: 1000,
     );
