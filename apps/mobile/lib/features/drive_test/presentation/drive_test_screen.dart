@@ -5,6 +5,7 @@ import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/services/sample_gaps.dart';
+import 'package:opennetiq_mobile/features/privacy/presentation/privacy_summary.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
 import 'package:opennetiq_mobile/features/map/presentation/track_map.dart';
 import 'package:opennetiq_mobile/features/recording/application/live_track.dart';
@@ -32,6 +33,7 @@ class DriveTestScreen extends ConsumerWidget {
             message: 'This device cannot measure mobile networks.',
           ),
         ),
+        AsyncData(:final value) when !value.consent => const ConsentPrompt(),
         AsyncData(:final value) when !value.canMonitor => PermissionPrompt(
           onRequest: () =>
               ref.read(radioPermissionsProvider.notifier).request(),

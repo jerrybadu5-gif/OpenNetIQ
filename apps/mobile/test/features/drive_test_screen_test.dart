@@ -11,6 +11,7 @@ import 'package:opennetiq_mobile/features/recording/application/recording_provid
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
 import '../fixtures/map_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
@@ -35,6 +36,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          grantedConsentOverride,
           noTiles,
           recordingControllerProvider.overrideWith(() => controller),
           recordingServiceProvider.overrideWithValue(service),

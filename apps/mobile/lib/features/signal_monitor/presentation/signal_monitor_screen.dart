@@ -4,6 +4,7 @@ import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/errors/radio_exception.dart';
+import 'package:opennetiq_mobile/features/privacy/presentation/privacy_summary.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
 import 'package:opennetiq_mobile/features/location/presentation/location_card.dart';
 import 'package:opennetiq_mobile/features/recording/presentation/record_button.dart';
@@ -44,6 +45,7 @@ class SignalMonitorScreen extends ConsumerWidget {
           message: 'This device cannot measure mobile networks.',
         ),
       ),
+      AsyncData(:final value) when !value.consent => const ConsentPrompt(),
       AsyncData(:final value) when !value.canMonitor => PermissionPrompt(
         onRequest: () => ref.read(radioPermissionsProvider.notifier).request(),
       ),

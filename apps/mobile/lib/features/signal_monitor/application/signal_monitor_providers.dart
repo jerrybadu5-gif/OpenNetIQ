@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opennetiq_mobile/data/repositories/platform_radio_repository.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_permissions.dart';
+import 'package:opennetiq_mobile/features/privacy/application/consent_controller.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
 import 'package:opennetiq_mobile/domain/repositories/radio_repository.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
@@ -29,13 +30,25 @@ final radioPermissionsProvider =
 
 class RadioPermissionsController extends AsyncNotifier<RadioPermissions> {
   @override
-  Future<RadioPermissions> build() =>
-      ref.watch(radioRepositoryProvider).getPermissions();
+  Future<RadioPermissions> build() async {
+    final consent = ref.watch(measurementConsentProvider);
+    final permissions = await ref
+        .watch(radioRepositoryProvider)
+        .getPermissions();
+    return permissions.withConsent(consent);
+  }
 
+  /// Asks Android for permissions, only after measurement consent.
   Future<void> request() async {
+    final consent = ref.read(measurementConsentProvider);
+    if (!consent) {
+      ref.invalidateSelf();
+      return;
+    }
     state = const AsyncLoading<RadioPermissions>();
     state = await AsyncValue.guard(
-      () => ref.read(radioRepositoryProvider).requestPermissions(),
+      () async => (await ref.read(radioRepositoryProvider).requestPermissions())
+          .withConsent(consent),
     );
   }
 }

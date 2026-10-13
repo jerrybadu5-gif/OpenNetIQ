@@ -10,6 +10,7 @@ import 'package:opennetiq_mobile/features/recording/application/recording_provid
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/db_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
@@ -27,6 +28,7 @@ void main() {
     location = FakeLocationRepository(statuses: [locationStatus()]);
     container = ProviderContainer(
       overrides: [
+        grantedConsentOverride,
         appDatabaseProvider.overrideWithValue(db),
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),
@@ -108,6 +110,7 @@ void main() {
     // A new process: fresh container, recovery runs at startup.
     final next = ProviderContainer(
       overrides: [
+        grantedConsentOverride,
         appDatabaseProvider.overrideWithValue(db),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),
       ],

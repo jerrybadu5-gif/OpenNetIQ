@@ -12,6 +12,7 @@ import 'package:opennetiq_mobile/features/signal_monitor/application/signal_moni
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
 
+import '../fixtures/consent_fixtures.dart';
 import '../fixtures/db_fixtures.dart';
 import '../fixtures/location_fixtures.dart';
 import '../fixtures/radio_fixtures.dart';
@@ -35,6 +36,7 @@ void main() {
   ProviderContainer make({bool permitted = true}) {
     final c = ProviderContainer(
       overrides: [
+        grantedConsentOverride,
         appDatabaseProvider.overrideWithValue(db),
         deviceInfoSourceProvider.overrideWithValue(FakeDeviceInfoSource()),
         recordingServiceProvider.overrideWithValue(FakeRecordingService()),

@@ -7,6 +7,9 @@ import 'package:opennetiq_mobile/core/theme/app_theme.dart';
 import 'package:opennetiq_mobile/features/drive_test/presentation/drive_test_screen.dart';
 import 'package:opennetiq_mobile/features/latency_test/presentation/latency_test_screen.dart';
 import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
+import 'package:opennetiq_mobile/features/privacy/application/consent_controller.dart';
+import 'package:opennetiq_mobile/features/privacy/presentation/consent_screen.dart';
+import 'package:opennetiq_mobile/features/privacy/presentation/privacy_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
@@ -30,6 +33,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'speed',
             builder: (context, state) => const SpeedTestScreen(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            builder: (context, state) => const PrivacyScreen(),
           ),
           GoRoute(
             path: 'drive',
@@ -57,8 +64,28 @@ class OpenNetIqApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final title = ref.watch(flavorProvider).label;
+    final consent = ref.watch(consentProvider);
+    // Consent gate (#24): nothing else is shown, and nothing is measured,
+    // until the user answered for the current policy version. If the
+    // ledger cannot be read the app opens with measurement off.
+    final Widget? gate = switch (consent.value) {
+      null when consent.isLoading => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      final status? when !status.decided => const ConsentScreen(),
+      _ => null,
+    };
+    if (gate != null) {
+      return MaterialApp(
+        title: title,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        home: gate,
+      );
+    }
     return MaterialApp.router(
-      title: ref.watch(flavorProvider).label,
+      title: title,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: ref.watch(routerProvider),
