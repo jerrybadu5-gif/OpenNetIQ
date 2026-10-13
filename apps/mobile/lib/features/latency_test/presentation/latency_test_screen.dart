@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:opennetiq_mobile/app_routes.dart';
+import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/domain/entities/latency_test.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
+import 'package:opennetiq_mobile/features/latency_test/presentation/rtt_chart.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_providers.dart';
 
-/// Latency test (issue #21): ICMP, TCP and DNS against the test server.
-/// Charts and history follow in #22.
+/// Latency test (issues #21, #22): ICMP, TCP and DNS against the test
+/// server, live RTT chart, results and history.
 class LatencyTestScreen extends ConsumerWidget {
   const LatencyTestScreen({super.key});
 
@@ -62,8 +64,11 @@ class LatencyTestScreen extends ConsumerWidget {
                       '${state.probes.length} / 20 probes',
                       style: theme.textTheme.headlineSmall,
                     ),
-                  if (state.running && state.probes.isNotEmpty)
+                  if (state.running && state.probes.isNotEmpty) ...[
                     Text('Last: ${ms(state.probes.last.rttMs)}'),
+                    const SizedBox(height: 8),
+                    RttChart(rttsMs: [for (final p in state.probes) p.rttMs]),
+                  ],
                   const SizedBox(height: 16),
                   if (state.running)
                     OutlinedButton.icon(
@@ -96,6 +101,8 @@ class LatencyTestScreen extends ConsumerWidget {
             'blocked by some networks; that shows as 100 % loss.',
             style: theme.textTheme.bodySmall,
           ),
+          const SizedBox(height: 16),
+          const LatencyHistoryCard(),
         ],
       ),
     );
@@ -149,6 +156,10 @@ class LatencyResultCard extends StatelessWidget {
                   : '${loss.toStringAsFixed(0)} % '
                         '(${result.probesReceived}/${result.probesSent})',
             ),
+            if (result.rawRttsMs.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              RttChart(rttsMs: result.rawRttsMs),
+            ],
             if (error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -157,6 +168,65 @@ class LatencyResultCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Stored latency rows (one per protocol), newest first.
+class LatencyHistoryCard extends ConsumerWidget {
+  const LatencyHistoryCard({super.key});
+
+  static String summary(LatencyResult r) {
+    final loss = r.packetLossPct;
+    return '${r.protocol.label} · median ${LatencyTestScreen.ms(r.medianMs)}'
+        ' · loss ${loss == null ? '-' : '${loss.toStringAsFixed(0)} %'}';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final history = ref.watch(latencyHistoryProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('History', style: theme.textTheme.titleMedium),
+        switch (history) {
+          AsyncData(:final value) when value.isEmpty => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('No tests yet.'),
+          ),
+          AsyncData(:final value) => Card(
+            child: Column(
+              children: [
+                for (final record in value)
+                  ListTile(
+                    title: Text(summary(record.result)),
+                    subtitle: Text(
+                      '${formatLocalDateTime(record.timestamp)} · '
+                      '${record.result.target} · '
+                      '${record.result.status.wireValue}',
+                    ),
+                    onTap: () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (context) => SafeArea(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(8),
+                          child: LatencyResultCard(result: record.result),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          AsyncError(:final error) => Text('Could not load history: $error'),
+          _ => const Padding(
+            padding: EdgeInsets.all(8),
+            child: LinearProgressIndicator(),
+          ),
+        },
+      ],
     );
   }
 }

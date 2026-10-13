@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opennetiq_mobile/data/local/drift_speed_test_store.dart';
 import 'package:opennetiq_mobile/data/repositories/platform_speed_test_engine.dart';
 import 'package:opennetiq_mobile/domain/entities/speed_test.dart';
+import 'package:opennetiq_mobile/domain/entities/test_server.dart';
 import 'package:opennetiq_mobile/domain/repositories/speed_test_repository.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
 
@@ -37,6 +38,11 @@ final speedTestServerProvider = FutureProvider<String?>((ref) async {
   if (saved != null && saved.trim().isNotEmpty) return saved.trim();
   return defaultSpeedTestServer.isEmpty ? null : defaultSpeedTestServer;
 });
+
+/// Server presets shown in the server card (#22).
+final testServerPresetsProvider = Provider<List<TestServer>>(
+  (ref) => testServerPresets(buildDefault: defaultSpeedTestServer),
+);
 
 /// Latest stored tests, newest first.
 final speedTestHistoryProvider = StreamProvider<List<SpeedTestRecord>>(
