@@ -1,7 +1,7 @@
 # Session export (issue #23)
 
 Session detail → **Export** (share icon, finished sessions only) →
-**CSV**, **GeoJSON** or **CSV + GeoJSON** → Android share sheet (Drive,
+**CSV**, **GeoJSON**, **KML** (#27) or **All formats** → Android share sheet (Drive,
 e-mail, Files, Bluetooth...).
 
 | File | Content |

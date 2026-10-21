@@ -139,11 +139,15 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text('Export session'), findsOneWidget);
-    await tester.tap(find.text('CSV + GeoJSON'));
+    await tester.tap(find.text('All formats'));
     await tester.pumpAndSettle();
-    expect(exporter.calls.single.$2, {ExportFormat.csv, ExportFormat.geojson});
+    expect(exporter.calls.single.$2, {
+      ExportFormat.csv,
+      ExportFormat.geojson,
+      ExportFormat.kml,
+    });
     expect(sharer.subjects.single, 'OpenNetIQ export: Route 1');
-    expect(find.text('Exported x.csv, x.geojson'), findsOneWidget);
+    expect(find.text('Exported x.csv, x.geojson, x.kml'), findsOneWidget);
   });
 
   testWidgets('dismissing the sheet exports nothing', (tester) async {

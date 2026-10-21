@@ -79,5 +79,13 @@ Multiple flags are sorted and joined with `|`.
 - Targets: ICMP and TCP probe the speed-test server host (TCP on its URL port). Probes are sent on a fixed 200 ms schedule; a probe without answer within the timeout is lost.
 - ICMP uses the system `ping` (no root); replies are matched by sequence number, duplicates ignored.
 
+## 6a. Cell scan and estimated sites (issue #27)
+- **Cell scan** aggregates stored `cell_observations` (serving and neighbour). Cell key: RAT + PLMN + cell ID; cells without identity (neighbours reporting only ARFCN + PCI) are keyed by RAT + ARFCN + PCI and take the identity of the single identified cell on the same channel when it is unambiguous. Mean level is the mean of dBm values.
+- **Site** = eNB ID (LTE) or gNB ID (NR); other RATs: the cell. Positions come from all sessions, so they improve with every drive. Mock-location and no-fix samples are excluded; GOOD fixes are used when there are at least 3.
+- **Timing-advance fit (preferred)**: LTE serving-cell TA index → range `(TA + 0.5) × 78.12 m` (3GPP TS 36.213: one step = 16 Ts). Least-squares (Gauss-Newton) fit of the site position to ≥ 3 distinct ranges spread over ≥ 150 m, started from 9 points; if a mirror solution > 200 m away fits about as well (straight road) the fit is rejected. Uncertainty = max(80 m, 2 × RMS residual + 39 m).
+- **Level centroid (fallback)**: level-weighted (linear power) centroid of the strongest quarter (≥ 3) of samples. It lies on the driven road, so uncertainty = max(200 m, 2 × weighted spread).
+- **Sector azimuth**: weighted circular mean of bearings from the site to the cell's strongest samples, reported only if the mean resultant length ≥ 0.5 and most of those samples lie outside half the uncertainty radius.
+- Estimated positions are labelled "estimated" everywhere (app, KML). They are not survey data and must not be used as such in regulatory findings.
+
 ## 7. References
 ITU-T E.800, G.1010, G.1020, P.863, Y.1540 · 3GPP TS 36.214, 36.133, 38.215, 38.133, 23.203, 32.450 · ETSI EG 202 057 · RFC 3393, 3550, 7946 · GSMA network benchmarking guidance.

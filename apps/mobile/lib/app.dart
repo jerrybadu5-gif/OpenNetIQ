@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/core/flavor.dart';
 import 'package:opennetiq_mobile/core/theme/app_theme.dart';
+import 'package:opennetiq_mobile/features/cells/presentation/cell_scan_screen.dart';
 import 'package:opennetiq_mobile/features/drive_test/presentation/drive_test_screen.dart';
 import 'package:opennetiq_mobile/features/latency_test/presentation/latency_test_screen.dart';
 import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
@@ -35,6 +36,10 @@ final routerProvider = Provider<GoRouter>(
             builder: (context, state) => const SpeedTestScreen(),
           ),
           GoRoute(
+            path: 'cells',
+            builder: (context, state) => const CellScanScreen(),
+          ),
+          GoRoute(
             path: 'privacy',
             builder: (context, state) => const PrivacyScreen(),
           ),
@@ -50,6 +55,13 @@ final routerProvider = Provider<GoRouter>(
                 path: ':id',
                 builder: (context, state) =>
                     SessionDetailScreen(sessionId: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'cells',
+                    builder: (context, state) =>
+                        CellScanScreen(sessionId: state.pathParameters['id']),
+                  ),
+                ],
               ),
             ],
           ),

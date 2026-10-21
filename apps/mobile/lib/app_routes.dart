@@ -7,6 +7,8 @@ abstract final class AppRoutes {
   static const String speed = '/speed';
   static const String latency = '/latency';
   static const String privacy = '/privacy';
+  static const String cells = '/cells';
 
   static String sessionDetail(String id) => '/sessions/$id';
+  static String sessionCells(String id) => '/sessions/$id/cells';
 }

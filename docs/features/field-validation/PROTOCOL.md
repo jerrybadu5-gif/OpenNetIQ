@@ -40,7 +40,7 @@ record). Drive at normal traffic speed; do not stop the logs mid-route.
    the reference speed test against the same server within 2 minutes.
    Repeat across routes until **≥ 30 pairs** in total.
 3. At the end: stop OpenNetIQ, stop the reference log.
-4. Export: OpenNetIQ session → *CSV + GeoJSON*; reference log → CSV.
+4. Export: OpenNetIQ session → *All formats*; reference log → CSV.
    Name files `routeN_*`. Keep originals unedited.
 
 ## 5. Soak and battery test

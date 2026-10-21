@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:opennetiq_mobile/domain/entities/cell_scan.dart';
+import 'package:opennetiq_mobile/features/cells/application/cell_layer_providers.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/network_type.dart';
@@ -76,6 +78,7 @@ void main() {
       ProviderScope(
         overrides: [
           noTiles,
+          cellLayerProvider.overrideWith((ref, id) async => CellLayer.empty),
           sessionRepositoryProvider.overrideWithValue(sessions),
           sampleRepositoryProvider.overrideWithValue(
             FakeSampleRepository(points ?? const []),
@@ -104,6 +107,7 @@ void main() {
     expect(find.byType(FlutterMap), findsOneWidget);
     expect(find.text('Completed'), findsOneWidget);
     expect(find.byTooltip('Export'), findsOneWidget);
+    expect(find.text('0 cells · 0 estimated sites'), findsOneWidget);
     expect(find.text('2.35 km'), findsOneWidget);
     expect(find.text('2:05'), findsOneWidget);
     // 2 s -> 5 s misses 2 ticks: 5 recorded, 7 expected.

@@ -35,6 +35,15 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.signal),
           ),
           ListTile(
+            leading: const Icon(Icons.cell_tower),
+            title: const Text('Cell scan'),
+            subtitle: const Text(
+              'Every cell seen on your drives, with estimated sites',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.cells),
+          ),
+          ListTile(
             leading: const Icon(Icons.folder_open),
             title: const Text('Sessions'),
             subtitle: const Text('Recorded measurements stored on this device'),

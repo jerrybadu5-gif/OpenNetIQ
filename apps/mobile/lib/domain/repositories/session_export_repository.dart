@@ -8,6 +8,9 @@ enum ExportFormat {
 
   /// RFC 7946 FeatureCollection: track, samples, tests.
   geojson,
+
+  /// KML 2.2 for Google Earth: coloured track, samples, estimated sites.
+  kml,
 }
 
 class ExportedFile {

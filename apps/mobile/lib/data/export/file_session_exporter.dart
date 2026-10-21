@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:opennetiq_mobile/data/export/kml_builder.dart';
 import 'package:opennetiq_mobile/data/export/session_export_builder.dart';
 import 'package:opennetiq_mobile/domain/repositories/session_export_repository.dart';
 import 'package:path/path.dart' as p;
@@ -16,6 +17,7 @@ class FileSessionExporter implements SessionExporter {
 
   static const csvMime = 'text/csv';
   static const geoJsonMime = 'application/geo+json';
+  static const kmlMime = 'application/vnd.google-earth.kml+xml';
 
   @override
   Future<List<ExportedFile>> export(
@@ -63,6 +65,15 @@ class FileSessionExporter implements SessionExporter {
         geoJsonMime,
         builder.geoJson(),
         1 + located + data.speedTests.length + data.latencyTests.length,
+      );
+    }
+    if (formats.contains(ExportFormat.kml)) {
+      final kml = KmlBuilder(data);
+      await write(
+        '$base.kml',
+        kmlMime,
+        kml.build(),
+        data.samples.where((s) => s.lat != null && s.lon != null).length,
       );
     }
     return files;
