@@ -129,6 +129,24 @@ Future<void> seedExportSession(AppDatabase db, {String name = 'POM Route 1'}) =>
             ),
           );
       await db
+          .into(db.qoeTests)
+          .insert(
+            QoeTestsCompanion.insert(
+              testId: 'qoe-1',
+              sessionId: const Value(exportSessionId),
+              measurementId: const Value('m1'),
+              timestamp: '2026-10-13T01:00:01.800Z',
+              kind: 'web',
+              methodologyVersion: '1.0.0',
+              label: 'Google',
+              target: 'https://www.google.com/',
+              status: 'ok',
+              totalMs: const Value(1800),
+              ttfbMs: const Value(210),
+              createdAt: ts,
+            ),
+          );
+      await db
           .into(db.latencyTests)
           .insert(
             LatencyTestsCompanion.insert(

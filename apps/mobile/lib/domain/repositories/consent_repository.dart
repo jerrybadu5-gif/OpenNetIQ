@@ -12,7 +12,7 @@ abstract interface class ConsentRepository {
   Future<List<ConsentRecord>> ledger();
 }
 
-/// Removes measurement data (sessions, samples, cells, tests). The consent
+/// Removes measurement data (sessions, samples, cells, all tests). The consent
 /// ledger, device row and settings are kept.
 abstract interface class MeasurementDataEraser {
   Future<void> eraseMeasurements();

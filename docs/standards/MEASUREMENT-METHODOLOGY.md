@@ -79,6 +79,17 @@ Multiple flags are sorted and joined with `|`.
 - Targets: ICMP and TCP probe the speed-test server host (TCP on its URL port). Probes are sent on a fixed 200 ms schedule; a probe without answer within the timeout is lost.
 - ICMP uses the system `ping` (no root); replies are matched by sequence number, duplicates ignored.
 
+## 6b. Customer-experience tests (method `qoe-1.0`, issue #29)
+All probes start cold: no HTTP cache, no connection reuse, so DNS, TCP and TLS are measured as a first visit. Results are linked to the drive (or a stand-alone session) at the run start; each target is one `qoe_tests` row.
+- **Web browsing**: page loaded in an off-screen Android WebView with an empty cache; W3C Navigation Timing gives DNS, TCP connect (TLS excluded), TLS, time to first byte, DOMContentLoaded and load-event end (page load time). Timeout 30 s (failed). Values come from the browser engine (Chromium), as experienced by users.
+- **App reachability**: HTTPS GET of the app's endpoint (OkHttp, whole body read): DNS, TCP, TLS, first byte, total, HTTP status. HTTP ≥ 400 or no response = failed. Measures the network path to the service, not the app's own protocol.
+- **Video streaming**, 30 s by default:
+  - *Direct stream* (HLS/DASH/MP4): ExoPlayer with adaptive bitrate, no rendering surface. *Video on a web page* (YouTube, Facebook, game streams): first HTML5 `<video>` in an off-screen WebView, muted autoplay.
+  - Start delay = test start → first playback; rebuffer = playback → buffering after the first start, until playback resumes (an open stall counts until the end); played time; time-weighted bitrate of the selected video format (direct streams); highest resolution seen.
+  - Status: no playback = failed; playback with a later error = partial.
+- **File transfer**: fixed size (default 5 MiB) download from `garbage.php` and upload to `empty.php` of the configured test server, one connection; rate = bytes × 8 / total time (Mbit/s, SI). Complements the multi-connection speed test with a single-transfer user experience.
+- Third-party sites see the phone's IP address; targets and video sources are configured by the operator of the test campaign.
+
 ## 6a. Cell scan and estimated sites (issue #27)
 - **Cell scan** aggregates stored `cell_observations` (serving and neighbour). Cell key: RAT + PLMN + cell ID; cells without identity (neighbours reporting only ARFCN + PCI) are keyed by RAT + ARFCN + PCI and take the identity of the single identified cell on the same channel when it is unambiguous. Mean level is the mean of dBm values.
 - **Site** = eNB ID (LTE) or gNB ID (NR); other RATs: the cell. Positions come from all sessions, so they improve with every drive. Mock-location and no-fix samples are excluded; GOOD fixes are used when there are at least 3.

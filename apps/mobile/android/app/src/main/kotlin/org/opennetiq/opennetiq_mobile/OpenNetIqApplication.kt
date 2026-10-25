@@ -5,6 +5,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import org.opennetiq.measurement.bridge.MeasurementBridge
+import org.opennetiq.measurement.qoe.QoeBridge
 
 /**
  * Owns the app's single FlutterEngine (ADR-014). The engine outlives
@@ -14,12 +15,15 @@ import org.opennetiq.measurement.bridge.MeasurementBridge
 class OpenNetIqApplication : Application() {
     lateinit var bridge: MeasurementBridge
         private set
+    lateinit var qoe: QoeBridge
+        private set
 
     override fun onCreate() {
         super.onCreate()
         val engine = FlutterEngine(this)
         // Channel handlers are registered before Dart starts.
         bridge = MeasurementBridge(this, engine.dartExecutor.binaryMessenger)
+        qoe = QoeBridge(this, engine.dartExecutor.binaryMessenger)
         engine.dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
         FlutterEngineCache.getInstance().put(ENGINE_ID, engine)
     }

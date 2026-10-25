@@ -122,6 +122,17 @@ void main() {
     expect(speed['probes_sent'], '');
   });
 
+  test('QoE CSV: one row per test, located by its sample', () async {
+    final rows = parseCsv((await builder()).qoeCsv());
+    expect(rows.first, SessionExportBuilder.qoeColumns);
+    final r = Map.fromIterables(rows.first, rows[1]);
+    expect(r['kind'], 'web');
+    expect(r['label'], 'Google');
+    expect(r['total_ms'], '1800.0');
+    expect(r['lat'], '-9.45');
+    expect(r['rate_mbps'], '');
+  });
+
   test('GeoJSON: RFC 7946 track, located samples and tests', () async {
     final doc = jsonDecode((await builder()).geoJson()) as Map<String, Object?>;
     expect(doc['type'], 'FeatureCollection');
@@ -134,6 +145,7 @@ void main() {
       'sample',
       'speed_test',
       'latency_test',
+      'qoe_test',
     ]);
     final track = features.first;
     final geometry = track['geometry']! as Map;
@@ -200,9 +212,10 @@ void main() {
       expect(files.map((f) => f.name), [
         'opennetiq_pom-route-1_20261013T010000Z.csv',
         'opennetiq_pom-route-1_20261013T010000Z_tests.csv',
+        'opennetiq_pom-route-1_20261013T010000Z_qoe.csv',
         'opennetiq_pom-route-1_20261013T010000Z.geojson',
       ]);
-      expect(files.map((f) => f.rows), [3, 2, 5]);
+      expect(files.map((f) => f.rows), [3, 2, 1, 6]);
       expect(files.last.mimeType, 'application/geo+json');
       for (final f in files) {
         expect(File(f.path).existsSync(), isTrue);
@@ -215,6 +228,7 @@ void main() {
         await exporter().export(exportSessionId, {ExportFormat.geojson});
         await db.delete(db.speedTests).go();
         await db.delete(db.latencyTests).go();
+        await db.delete(db.qoeTests).go();
         final files = await exporter().export(exportSessionId, {
           ExportFormat.csv,
         });

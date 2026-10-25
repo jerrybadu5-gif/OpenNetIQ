@@ -56,6 +56,14 @@ class FileSessionExporter implements SessionExporter {
         );
       }
     }
+    if (formats.contains(ExportFormat.csv) && data.qoeTests.isNotEmpty) {
+      await write(
+        '${base}_qoe.csv',
+        csvMime,
+        builder.qoeCsv(),
+        data.qoeTests.length,
+      );
+    }
     if (formats.contains(ExportFormat.geojson)) {
       final located = data.samples
           .where((s) => s.lat != null && s.lon != null)
@@ -64,7 +72,11 @@ class FileSessionExporter implements SessionExporter {
         '$base.geojson',
         geoJsonMime,
         builder.geoJson(),
-        1 + located + data.speedTests.length + data.latencyTests.length,
+        1 +
+            located +
+            data.speedTests.length +
+            data.latencyTests.length +
+            data.qoeTests.length,
       );
     }
     if (formats.contains(ExportFormat.kml)) {

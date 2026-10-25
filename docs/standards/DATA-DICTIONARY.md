@@ -144,6 +144,27 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 | status | TEXT | enum | no | Engine | `ok`, `partial`, `failed` |
 | created_at | TEXT | UTC ISO 8601 | no | App | |
 
+## qoe_tests (schema v2, issue #29)
+| Column | Type | Null | Description |
+|---|---|---|---|
+| test_id | TEXT PK | no | UUIDv7 |
+| session_id | TEXT FK | yes | Drive or single-test session |
+| measurement_id | TEXT FK | yes | Sample at the run start |
+| timestamp | TEXT | no | Target start, UTC ISO 8601 |
+| kind | TEXT | no | `web`, `video`, `app`, `file` |
+| methodology_version | TEXT | no | Methodology applied (`qoe-1.0` rules) |
+| label / target | TEXT | no | Display name / URL tested |
+| status | TEXT | no | `ok`, `partial` (video started, later error), `failed` |
+| error | TEXT | yes | Failure reason |
+| total_ms | REAL | yes | Page load / response / transfer time / test duration (video) |
+| dns_ms, connect_ms, tls_ms, ttfb_ms, dom_ms | REAL | yes | Phase timings (connect excludes TLS) |
+| http_status | INTEGER | yes | Final HTTP status (app, file) |
+| start_delay_ms, rebuffer_count, rebuffer_ms, played_ms | REAL/INTEGER | yes | Video playback |
+| bitrate_kbps | REAL | yes | Time-weighted video format bitrate (direct streams) |
+| resolution | TEXT | yes | Highest resolution, e.g. `720p` |
+| bytes, rate_mbps, direction | INTEGER/REAL/TEXT | yes | File transfer |
+| created_at | TEXT | no | UTC ISO 8601 |
+
 ## app_settings
 | Column | Type | Null | Description |
 |---|---|---|---|
