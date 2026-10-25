@@ -16,7 +16,7 @@ tags.
 - Domain: `CampaignTags`, `AreaClass`, `pngRegions` (`domain/entities/campaign_tags.dart`).
 - Application: `CampaignTagsController` (`app_settings` key `campaign.tags.v1`), `currentCampaignTags(ref)` (returns untagged on any read error, so tagging never blocks a measurement).
 - Used by `RecordingController.start` and `TestContextService.link` when creating sessions.
-- Storage: `sessions.region`, `sessions.area_class`, `sessions.location_name` (schema v3).
+- Storage: `sessions.region`, `sessions.area_class`, `sessions.location_name` (schema v4).
 - UI: `CampaignTagsCard` / `CampaignTagsDialog` (`features/campaign/presentation`).
 
 ## API / data

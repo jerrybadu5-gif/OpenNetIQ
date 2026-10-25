@@ -29,7 +29,7 @@ HTTP transfers only and no location tags. Decided by the maintainer on
   (`urban`/`semi_urban`/`rural`) and `location_name`, set once in the app
   (Home or drive setup) and applied to every new session. They are
   exported in every CSV row and GeoJSON feature.
-- All of this is folded into schema v3, which is still unreleased.
+- Schema v4 adds these columns. Test phones already had development v3 layouts, so the upgrade adds each column only when it is missing.
 
 ## Consequences
 - Results match the Rule's protocol and file sizes, so the method cannot be

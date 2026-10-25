@@ -189,7 +189,7 @@ void main() {
           .get();
       expect(tables.map((r) => r.read<String>('name')), contains('qoe_tests'));
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 3);
+      expect(version.read<int>('user_version'), 4);
     },
   );
 }

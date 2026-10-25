@@ -24,9 +24,6 @@ CREATE TABLE sessions (
   sampling_interval_ms INTEGER NOT NULL CHECK (sampling_interval_ms IN (1000,2000,5000)),
   operator_under_test  TEXT,
   notes                TEXT,
-  region               TEXT,                      -- v3 campaign tags (spec v3 M15), e.g. Southern
-  area_class           TEXT CHECK (area_class IN ('urban','semi_urban','rural')),
-  location_name        TEXT,                      -- place name, e.g. Waigani
   methodology_version  TEXT NOT NULL,
   started_at           TEXT,
   ended_at             TEXT,
@@ -176,9 +173,6 @@ CREATE TABLE qoe_tests (                         -- v2 (issue #29), method qoe-1
   bytes                INTEGER,
   rate_mbps            REAL,                      -- file transfer
   direction            TEXT,                      -- file: download / upload
-  protocol             TEXT CHECK (protocol IN ('http','ftp')), -- file (v3, M14)
-  serving_level_dbm    REAL,                      -- file: mean serving RSRP/RSCP/RSSI during the transfer (v3)
-  serving_rat          TEXT,                      -- file: LTE / NR / WCDMA / GSM (v3)
   created_at           TEXT NOT NULL
 );
 
@@ -192,14 +186,13 @@ CREATE TABLE voice_sms_tests (                   -- v3 (issue #30), ADR-022; no 
   label                TEXT NOT NULL,             -- test line name
   target_masked        TEXT NOT NULL,             -- last two digits only, e.g. ••67
   status               TEXT NOT NULL CHECK (status IN ('ok','partial','failed')),
-  outcome              TEXT NOT NULL,             -- completed/dropped/setup_timeout/no_answer/rejected/not_placed/unknown/ended_early; received/delivered/not_received/no_report/delivery_failed/not_sent
+  outcome              TEXT NOT NULL,             -- completed/dropped/no_answer/rejected/not_placed/unknown/ended_early; received/delivered/not_received/no_report/delivery_failed/not_sent
   error                TEXT,
-  window_s             INTEGER,                   -- call: release after dialling (setup timeout + holding)
+  window_s             INTEGER,                   -- call: planned duration from dialling
   call_ms              REAL,                      -- call: dialling to release
   setup_ms             REAL,                      -- call: call_ms - connected_s (1 s resolution)
   connected_s          INTEGER,                   -- call: call-log duration
   dropped              INTEGER,                   -- call: released before the window ended after connecting
-  voice_rat            TEXT,                      -- call: GSM / UMTS / VoLTE / VoNR seen in call, e.g. VoLTE>UMTS
   loopback             INTEGER,                   -- sms: sent to this phone
   send_ms              REAL,                      -- sms: submit to sent report
   delivery_ms          REAL,                      -- sms: submit to delivery report
