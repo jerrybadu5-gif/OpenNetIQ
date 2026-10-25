@@ -27,6 +27,13 @@ void main() {
               'web' => {'total_ms': 1500.0, 'dns_ms': 12.0},
               'video' => {'start_delay_ms': 800.0, 'rebuffer_count': 0},
               'app' => throw PlatformException(code: 'X', message: 'boom'),
+              'ftp' => {
+                'protocol': 'ftp',
+                'direction': 'download',
+                'bytes': 104857600,
+                'total_ms': 40000.0,
+                'rate_mbps': 20.9,
+              },
               'file' => {
                 'total_ms': 1000.0,
                 'rate_mbps': 41.9,
@@ -74,6 +81,26 @@ void main() {
       });
       expect(file.label, '5 MB upload');
       expect(file.rateMbps, 41.9);
+      final ftp = await engine.ftp(
+        url: 'ftp://ix/',
+        user: 'onq',
+        password: 'pw',
+        sizeMib: 100,
+        upload: false,
+        maxDuration: const Duration(seconds: 600),
+      );
+      expect(calls.last.arguments, {
+        'url': 'ftp://ix/',
+        'user': 'onq',
+        'password': 'pw',
+        'size_mib': 100,
+        'direction': 'download',
+        'max_ms': 600000,
+      });
+      expect(ftp.protocol, 'ftp');
+      expect(ftp.label, 'FTP 100 MB download');
+      expect(ftp.rateMbps, 20.9);
+      expect(file.protocol, 'http');
       await engine.cancel();
       expect(calls.last.method, 'cancel');
     });
@@ -111,6 +138,28 @@ void main() {
       expect(list.first.result.rebufferCount, 2);
       expect(list.first.result.status, TestStatus.partial);
       expect(DriftQoeStore.recordOf(rows.first.copyWith(kind: 'nope')), isNull);
+      await store.saveQoeTests([
+        QoeRecord(
+          id: 'f1',
+          timestamp: DateTime.utc(2026, 10, 25, 3),
+          methodologyVersion: '1.0.0',
+          result: const QoeResult(
+            kind: QoeKind.file,
+            label: 'FTP',
+            target: 'ftp://ix/',
+            status: TestStatus.ok,
+            rateMbps: 20,
+            direction: 'download',
+            protocol: 'ftp',
+            servingLevelDbm: -97.5,
+            servingRat: 'LTE',
+          ),
+        ),
+      ]);
+      final ftp = (await store.watchQoeTests(limit: 1).first).single.result;
+      expect(ftp.protocol, 'ftp');
+      expect(ftp.servingLevelDbm, -97.5);
+      expect(ftp.servingRat, 'LTE');
     });
   });
 

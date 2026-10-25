@@ -1,6 +1,7 @@
 #!/bin/sh
 # Verifies a running speed-test server: smoke_test.sh [base_url]
-# Default base URL: http://127.0.0.1:8080. POSIX sh + curl only, so it also
+# Default base URL: http://127.0.0.1:8080. FTP checks run when FTP_URL
+# (e.g. ftp://127.0.0.1:21) and FTP_PASSWORD are set (FTP_USER default onq). POSIX sh + curl only, so it also
 # runs inside the curlimages/curl container (see docs/features/test-server).
 set -eu
 
@@ -54,6 +55,18 @@ has "CORS header" '^access-control-allow-origin: \*' "$(c -D - -o /dev/null -X O
 has "getIP json" '"processedString":"' "$(c "$BASE/backend/getIP.php" || true)"
 check "ping" "204" "$(c -o /dev/null -w '%{http_code}' "$BASE/backend/ping" || true)"
 check "unknown path" "404" "$(c -o /dev/null -w '%{http_code}' "$BASE/nope" || true)"
+
+if [ -n "${FTP_URL:-}" ] && [ -n "${FTP_PASSWORD:-}" ]; then
+  fu="${FTP_USER:-onq}:$FTP_PASSWORD"
+  f() { curl -sS --max-time 120 -u "$fu" "$@"; }
+  check "ftp download 5 MB" "5242880" "$(f -o /dev/null -w '%{size_download}' "$FTP_URL/download/5MB.bin" || true)"
+  check "ftp download 100 MB" "104857600" "$(f -o /dev/null -w '%{size_download}' "$FTP_URL/download/100MB.bin" || true)"
+  name="smoke-$$.bin"
+  check "ftp upload 5 MB" "5242880" "$(head -c 5242880 /dev/urandom | f -T - -o /dev/null -w '%{size_upload}' "$FTP_URL/upload/$name" || true)"
+  f -o /dev/null -Q "DELE upload/$name" "$FTP_URL/" || { echo "FAIL ftp delete"; fail=1; }
+  check "ftp download read-only" "550" "$(printf x | f -T - -o /dev/null -w '%{response_code}' "$FTP_URL/download/x.bin" 2>/dev/null || true)"
+  check "ftp wrong password" "530" "$(curl -sS --max-time 20 -u "${FTP_USER:-onq}:wrong" -o /dev/null -w '%{response_code}' "$FTP_URL/download/" 2>/dev/null || true)"
+fi
 
 if [ "$fail" -ne 0 ]; then echo "SMOKE TEST FAILED"; exit 1; fi
 echo "SMOKE TEST PASSED"

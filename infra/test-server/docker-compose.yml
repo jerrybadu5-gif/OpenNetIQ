@@ -32,3 +32,32 @@ services:
       retries: 3
       start_period: 20s
       start_interval: 2s
+
+  # FTP throughput tests (spec v3 M14, NICTA QoS Rule 2022 Schedule 2 G8).
+  # FTP_PASSWORD is required (>= 12 characters); set it in .env, never commit it.
+  ftp:
+    build: ./ftp
+    image: opennetiq/ftp-server:0.1.0
+    restart: unless-stopped
+    ports:
+      - "${FTP_PORT:-21}:2121"
+      - "30000-30009:30000-30009"
+    environment:
+      FTP_USER: "${FTP_USER:-onq}"
+      FTP_PASSWORD: "${FTP_PASSWORD:?set FTP_PASSWORD in .env}"
+      # Public IP or host name sent in PASV replies (needed behind NAT).
+      FTP_PUBLIC_ADDRESS: "${FTP_PUBLIC_ADDRESS:-}"
+      FTP_UPLOAD_TTL_S: "${FTP_UPLOAD_TTL_S:-600}"
+    volumes:
+      - ftp-data:/srv/ftp
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  # Download files (~185 MB, created once) and uploads (deleted after 10 min).
+  ftp-data:

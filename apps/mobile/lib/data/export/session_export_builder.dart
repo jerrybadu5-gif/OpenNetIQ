@@ -406,6 +406,9 @@ class SessionExportBuilder {
     'bytes',
     'rate_mbps',
     'direction',
+    'protocol',
+    'serving_level_dbm',
+    'serving_rat',
   ];
 
   /// Customer-experience tests (issue #29), in time order.
@@ -447,6 +450,9 @@ class SessionExportBuilder {
             t.bytes,
             t.rateMbps,
             t.direction,
+            t.protocol,
+            t.servingLevelDbm,
+            t.servingRat,
             ..._tags,
           ],
       ],
@@ -632,6 +638,8 @@ class SessionExportBuilder {
           'start_delay_ms': t.startDelayMs,
           'rebuffer_count': t.rebufferCount,
           'rate_mbps': t.rateMbps,
+          'protocol': t.protocol,
+          'serving_level_dbm': t.servingLevelDbm,
           'methodology_version': t.methodologyVersion,
         },
       });

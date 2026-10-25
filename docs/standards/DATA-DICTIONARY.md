@@ -166,6 +166,9 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 | bitrate_kbps | REAL | yes | Time-weighted video format bitrate (direct streams) |
 | resolution | TEXT | yes | Highest resolution, e.g. `720p` |
 | bytes, rate_mbps, direction | INTEGER/REAL/TEXT | yes | File transfer |
+| protocol | TEXT | yes | File transfer: `http`, `ftp` (v3, M14) |
+| serving_level_dbm | REAL | yes | File transfer: mean serving RSRP/RSCP/RSSI during the transfer (v3) |
+| serving_rat | TEXT | yes | RAT of `serving_level_dbm`: `LTE`, `NR`, `WCDMA`, `GSM` (v3) |
 | created_at | TEXT | no | UTC ISO 8601 |
 
 ## voice_sms_tests (schema v3, issue #30)

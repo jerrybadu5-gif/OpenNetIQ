@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opennetiq_mobile/data/mappers/qoe_mapper.dart';
+import 'package:opennetiq_mobile/domain/entities/network_type.dart';
 import 'package:opennetiq_mobile/domain/entities/qoe_test.dart';
 
 void main() {
@@ -30,6 +31,63 @@ void main() {
     expect(QoeKind.fromWire('video'), QoeKind.video);
     expect(QoeKind.fromWire('x'), isNull);
     expect(VideoMode.fromWire('nope'), VideoMode.stream);
+  });
+
+  test('FTP settings, sizes by network and file results', () {
+    expect(QoeSettings.ftpSizeFor(NetworkType.lte), 100);
+    expect(QoeSettings.ftpSizeFor(NetworkType.nrSa), 100);
+    expect(QoeSettings.ftpSizeFor(NetworkType.hspap), 50);
+    expect(QoeSettings.ftpSizeFor(NetworkType.edge), 5);
+    expect(QoeSettings.ftpSizeFor(null), 100);
+    const d = QoeSettings();
+    expect(d.fileProtocol, FileProtocol.http);
+    expect(d.ftpConfigured, isFalse);
+    final s = d.copyWith(
+      fileProtocol: FileProtocol.ftp,
+      ftpUrl: 'ftp://h/',
+      ftpUser: 'u',
+      ftpPassword: 'p',
+      ftpSizeAuto: false,
+      ftpDownloadMib: 20,
+      ftpUploadMib: 5,
+      ftpMaxSeconds: 120,
+    );
+    expect(s.ftpConfigured, isTrue);
+    final back = QoeSettings.fromJson(s.toJson());
+    expect(back.fileProtocol, FileProtocol.ftp);
+    expect(back.ftpUrl, 'ftp://h/');
+    expect(back.ftpSizeAuto, isFalse);
+    expect(back.ftpDownloadMib, 20);
+    expect(back.ftpUploadMib, 5);
+    expect(back.ftpMaxSeconds, 120);
+    final odd = QoeSettings.fromJson(const {'ftp_download_mib': 7});
+    expect(odd.ftpDownloadMib, 100); // not offered by the server
+    expect(FileProtocol.fromWire('x'), FileProtocol.http);
+    const r = QoeResult(
+      kind: QoeKind.file,
+      label: 'FTP',
+      target: 'ftp://h/',
+      status: TestStatus.ok,
+      totalMs: 40000,
+      rateMbps: 20,
+      direction: 'download',
+      protocol: 'ftp',
+    );
+    final withLevel = r.withLevel(-101.5, 'LTE');
+    expect(withLevel.servingLevelDbm, -101.5);
+    expect(withLevel.servingRat, 'LTE');
+    expect(withLevel.summary, 'FTP download 20.0 Mbps · 40.0 s');
+    expect(
+      QoeMapper.fromMap(QoeKind.file, 'f', 'u', const {}).protocol,
+      'http',
+    );
+    expect(QoeMapper.fromMap(QoeKind.web, 'w', 'u', const {}).protocol, isNull);
+    expect(
+      QoeMapper.fromMap(QoeKind.file, 'f', 'u', const {
+        'protocol': 'ftp',
+      }).protocol,
+      'ftp',
+    );
   });
 
   test('format 1 settings re-detect page videos saved as streams', () {

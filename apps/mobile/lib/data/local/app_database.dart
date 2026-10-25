@@ -46,6 +46,12 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(sessions, sessions.region);
         await m.addColumn(sessions, sessions.areaClass);
         await m.addColumn(sessions, sessions.locationName);
+        // From v1, qoe_tests was just created with these columns.
+        if (from >= 2) {
+          await m.addColumn(qoeTests, qoeTests.protocol);
+          await m.addColumn(qoeTests, qoeTests.servingLevelDbm);
+          await m.addColumn(qoeTests, qoeTests.servingRat);
+        }
         // Rebuilds consent_log for the new voice_sms scope CHECK.
         await m.alterTable(TableMigration(consentLog));
       }

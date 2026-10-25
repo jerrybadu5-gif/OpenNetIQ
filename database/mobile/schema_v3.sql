@@ -176,6 +176,9 @@ CREATE TABLE qoe_tests (                         -- v2 (issue #29), method qoe-1
   bytes                INTEGER,
   rate_mbps            REAL,                      -- file transfer
   direction            TEXT,                      -- file: download / upload
+  protocol             TEXT CHECK (protocol IN ('http','ftp')), -- file (v3, M14)
+  serving_level_dbm    REAL,                      -- file: mean serving RSRP/RSCP/RSSI during the transfer (v3)
+  serving_rat          TEXT,                      -- file: LTE / NR / WCDMA / GSM (v3)
   created_at           TEXT NOT NULL
 );
 

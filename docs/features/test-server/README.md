@@ -15,12 +15,23 @@ A hardened nginx container serving LibreSpeed-compatible endpoints:
 
 App server URL: `https://<host>/backend/` (or `http://<host>:8080/backend/` for the dev flavor on a LAN).
 
+## FTP throughput server (spec v3 M14)
+A second container (`ftp` service, pyftpdlib, non-root) for the NICTA QoS Rule 2022 Schedule 2 FTP tests:
+
+| Path | Use |
+|---|---|
+| `/download/{5,10,20,50,100}MB.bin` | Read-only, incompressible files (created on first start) |
+| `/upload/` | Writable; the app deletes its file after each test and anything older than `FTP_UPLOAD_TTL_S` (600 s) is removed |
+
+One account: `FTP_USER` (default `onq`) and `FTP_PASSWORD` (required, ≥ 12 characters, in `.env` only). Ports: control `FTP_PORT` (default 21) and passive `30000-30009`; behind NAT set `FTP_PUBLIC_ADDRESS` to the public IP. App setting: `ftp://<host>:21/`. Host it at the internet exchange in Port Moresby (Rule Schedule 2 G4), like the speed-test server. Plain FTP sends the password unencrypted: use a test-only account with no other rights.
+
 ## Quick start
 ```bash
 cd infra/test-server
 cp .env.example .env            # ports, HTTPS mode, logging
 docker compose up -d --build --wait
 ./smoke_test.sh http://127.0.0.1:8080
+FTP_URL=ftp://127.0.0.1:21 FTP_PASSWORD=... ./smoke_test.sh http://127.0.0.1:8080   # with FTP checks
 # Windows / any OS, from a container on the compose network:
 # docker run --rm --network test-server_default -v "${PWD}:/t:ro" curlimages/curl:8.16.0 sh /t/smoke_test.sh http://speedtest:8080
 ```
@@ -37,7 +48,7 @@ docker compose up -d --build --wait
    Renewal: a cron/systemd timer running `certbot renew`, copying the files again and `docker compose restart`.
 4. **.env**: `HTTP_PORT=80`, `HTTPS_PORT=443`, `SPEEDTEST_HTTPS=required`.
 5. `docker compose up -d --build --wait`, then `./smoke_test.sh https://speedtest.example.org`.
-6. **Firewall**: allow TCP 80/443 only (80 can be closed after certificates are issued if only HTTPS is used).
+6. **Firewall**: allow TCP 80/443 (80 can be closed after certificates are issued if only HTTPS is used), plus TCP 21 and 30000-30009 for FTP.
 7. **Kernel tuning** (host, `/etc/sysctl.d/90-speedtest.conf`):
    ```
    net.core.default_qdisc = fq

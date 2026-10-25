@@ -12,6 +12,7 @@ import 'package:opennetiq_mobile/features/speed_test/application/speed_test_prov
 
 import '../../fixtures/db_fixtures.dart';
 import '../../fixtures/qoe_fixtures.dart';
+import '../../fixtures/radio_fixtures.dart';
 import '../../fixtures/script_fixtures.dart';
 
 void main() {
@@ -124,6 +125,61 @@ void main() {
     context.linkError = StateError('disk full');
     await c2.read(qoeTestControllerProvider.notifier).run({QoeKind.web});
     expect(c2.read(qoeTestControllerProvider).error, contains('disk full'));
+  });
+
+  test('FTP: size by network, upload size, level tracked', () async {
+    settings.values[qoeSettingsKey] = jsonEncode(
+      smallSettings
+          .copyWith(
+            fileProtocol: FileProtocol.ftp,
+            ftpUrl: 'ftp://ix.test/',
+            ftpUser: 'onq',
+            ftpPassword: 'long-test-pass',
+            ftpUploadMib: 20,
+            ftpMaxSeconds: 300,
+          )
+          .toJson(),
+    );
+    final c = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        qoeEngineProvider.overrideWithValue(engine),
+        settingsRepositoryProvider.overrideWithValue(settings),
+        testContextProvider.overrideWith(
+          (ref) =>
+              context = FakeTestContext(ref)
+                ..radio = snapshot(networkType: 'UMTS'),
+        ),
+      ],
+    );
+    addTearDown(c.dispose);
+    await c.read(qoeTestControllerProvider.notifier).run({QoeKind.file});
+    expect(engine.calls, [
+      'ftp:50:down:ftp://ix.test/:onq:300', // 3G: 50 MB (Rule Sch. 2 G9)
+      'ftp:20:up:ftp://ix.test/:onq:300',
+    ]);
+    final rows = await db.select(db.qoeTests).get();
+    expect(rows.map((r) => r.protocol).toSet(), {'ftp'});
+    expect(rows.first.servingLevelDbm, -97.0);
+    expect(rows.first.servingRat, 'LTE');
+    expect(
+      c.read(qoeTestControllerProvider).results.first.summary,
+      startsWith('FTP download 20.0 Mbps'),
+    );
+  });
+
+  test('FTP without server details fails each transfer', () async {
+    settings.values[qoeSettingsKey] = jsonEncode(
+      smallSettings.copyWith(fileProtocol: FileProtocol.ftp).toJson(),
+    );
+    final c = container(server: null);
+    await c.read(qoeTestControllerProvider.notifier).run({QoeKind.file});
+    expect(engine.calls, isEmpty);
+    final r = c.read(qoeTestControllerProvider).results;
+    expect(r, hasLength(2));
+    expect(r.first.status, TestStatus.failed);
+    expect(r.first.protocol, 'ftp');
+    expect(r.first.error, contains('FTP server'));
   });
 
   test('settings: defaults, save, unreadable value', () async {

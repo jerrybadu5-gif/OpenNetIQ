@@ -18,3 +18,9 @@
 4. Airplane mode → Start: every row failed, no crash.
 5. Record a drive with a script containing a web and a video step; export
    *All formats*: `_qoe.csv` rows have positions.
+
+## FTP (spec v3 M14)
+- `FtpProbeTest.kt`: download, upload + delete, wrong password, missing file, invalid URL/size, closed port, cut-off, URL parsing, against an embedded Apache FtpServer.
+- `qoe_controller_test.dart`: size by network (3G → 50 MB), upload size, cut-off passed through, serving level stored, unconfigured FTP fails.
+- `infra/test-server/smoke_test.sh` with `FTP_URL` and `FTP_PASSWORD`: 5 MB and 100 MB download, 5 MB upload, delete, read-only download, wrong password.
+- On device: FTP download on LTE uses 100 MB and shows "Signal during transfer"; switching to 3G uses 50 MB; airplane mode mid-transfer gives a failed row with bytes so far.

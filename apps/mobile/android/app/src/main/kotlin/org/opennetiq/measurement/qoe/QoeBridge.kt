@@ -20,6 +20,7 @@ class QoeBridge(context: Context, messenger: BinaryMessenger) : MethodChannel.Me
     private val main = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
     private val http = HttpProbe()
+    private val ftp = FtpProbe()
     private val web by lazy { WebPageProbe(appContext) }
     private val video by lazy { VideoProbe(appContext) { activity } }
 
@@ -53,8 +54,18 @@ class QoeBridge(context: Context, messenger: BinaryMessenger) : MethodChannel.Me
                 val upload = call.argument<String>("direction") == "upload"
                 io.execute { reply(transfer(base, mib, upload)) }
             }
+            "ftp" -> {
+                val url = call.argument<String>("url") ?: return badArgs(result)
+                val user = call.argument<String>("user") ?: return badArgs(result)
+                val password = call.argument<String>("password") ?: return badArgs(result)
+                val upload = call.argument<String>("direction") == "upload"
+                val mib = (call.argument<Number>("size_mib") ?: 100).toInt()
+                val maxMs = (call.argument<Number>("max_ms") ?: 600_000).toLong().coerceIn(10_000, 1_800_000)
+                io.execute { reply(ftp.run(url, user, password, upload, mib, maxMs)) }
+            }
             "cancel" -> {
                 http.cancel()
+                ftp.cancel()
                 web.cancel()
                 video.cancel()
                 result.success(null)
