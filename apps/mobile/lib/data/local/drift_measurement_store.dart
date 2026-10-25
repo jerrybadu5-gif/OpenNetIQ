@@ -3,6 +3,7 @@ import 'package:opennetiq_mobile/core/methodology.dart';
 import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/core/uuid7.dart';
 import 'package:opennetiq_mobile/data/local/app_database.dart';
+import 'package:opennetiq_mobile/domain/entities/campaign_tags.dart';
 import 'package:opennetiq_mobile/data/local/sample_rows.dart';
 import 'package:opennetiq_mobile/domain/entities/cell_observation.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
@@ -38,6 +39,7 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
     required int samplingIntervalMs,
     String? operatorUnderTest,
     String? notes,
+    CampaignTags tags = CampaignTags.none,
   }) async {
     final id = _newId();
     final now = formatUtc(_now());
@@ -53,6 +55,9 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
             samplingIntervalMs: samplingIntervalMs,
             operatorUnderTest: Value(operatorUnderTest),
             notes: Value(notes),
+            region: Value(tags.region),
+            areaClass: Value(tags.areaClass?.wireValue),
+            locationName: Value(tags.location),
             methodologyVersion: methodologyVersion,
             createdAt: now,
             updatedAt: now,
@@ -337,5 +342,10 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
     startedAt: parseUtc(r.startedAt),
     endedAt: parseUtc(r.endedAt),
     distanceM: r.distanceM,
+    tags: CampaignTags(
+      region: r.region,
+      areaClass: AreaClass.fromWire(r.areaClass),
+      location: r.locationName,
+    ),
   );
 }

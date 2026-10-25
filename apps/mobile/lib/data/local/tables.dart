@@ -42,6 +42,13 @@ class Sessions extends Table {
   )();
   late final operatorUnderTest = text().nullable()();
   late final notes = text().nullable()();
+
+  /// Campaign tags (schema v4, spec v3 M15).
+  late final region = text().nullable()();
+  late final Column<String> areaClass = text().nullable().check(
+    areaClass.isIn(const ['urban', 'semi_urban', 'rural']),
+  )();
+  late final locationName = text().nullable()();
   late final methodologyVersion = text()();
   late final startedAt = text().nullable()();
   late final endedAt = text().nullable()();
@@ -255,6 +262,13 @@ class QoeTests extends Table {
   late final bytes = integer().nullable()();
   late final rateMbps = real().nullable()();
   late final direction = text().nullable()();
+
+  /// File transfer protocol and serving level during it (schema v4, M14).
+  late final Column<String> protocol = text().nullable().check(
+    protocol.isIn(const ['http', 'ftp']),
+  )();
+  late final servingLevelDbm = real().nullable()();
+  late final servingRat = text().nullable()();
   late final createdAt = text()();
 
   @override

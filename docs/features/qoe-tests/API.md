@@ -24,3 +24,9 @@ label, target, status, error, lat, lon, network_type, total_ms, dns_ms,
 connect_ms, tls_ms, ttfb_ms, dom_ms, http_status, start_delay_ms,
 rebuffer_count, rebuffer_ms, played_ms, bitrate_kbps, resolution, bytes,
 rate_mbps, direction` (columns: DATA-DICTIONARY.md `qoe_tests`).
+
+## FTP (spec v3 M14)
+
+`ftp` on `org.opennetiq/qoe`: `url` (`ftp://host[:port][/base/]`), `user`, `password`, `size_mib` (5, 10, 20, 50, 100), `direction` (`download`/`upload`), `max_ms` (10 000–1 800 000). Returns `protocol: ftp`, `direction`, `dns_ms`, `connect_ms`, `ttfb_ms`, `total_ms` (command → completion reply), `bytes`, `rate_mbps`, `error`. The Dart side adds `serving_level_dbm` / `serving_rat` from the radio snapshots seen during the call.
+
+Settings JSON (`qoe.settings.v1`, version 3) adds `file_protocol`, `ftp_url`, `ftp_user`, `ftp_password`, `ftp_size_auto`, `ftp_download_mib`, `ftp_upload_mib`, `ftp_max_s`.

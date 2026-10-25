@@ -186,14 +186,13 @@ CREATE TABLE voice_sms_tests (                   -- v3 (issue #30), ADR-022; no 
   label                TEXT NOT NULL,             -- test line name
   target_masked        TEXT NOT NULL,             -- last two digits only, e.g. ••67
   status               TEXT NOT NULL CHECK (status IN ('ok','partial','failed')),
-  outcome              TEXT NOT NULL,             -- completed/dropped/setup_timeout/no_answer/rejected/not_placed/unknown/ended_early; received/delivered/not_received/no_report/delivery_failed/not_sent
+  outcome              TEXT NOT NULL,             -- completed/dropped/no_answer/rejected/not_placed/unknown/ended_early; received/delivered/not_received/no_report/delivery_failed/not_sent
   error                TEXT,
-  window_s             INTEGER,                   -- call: release after dialling (setup timeout + holding)
+  window_s             INTEGER,                   -- call: planned duration from dialling
   call_ms              REAL,                      -- call: dialling to release
   setup_ms             REAL,                      -- call: call_ms - connected_s (1 s resolution)
   connected_s          INTEGER,                   -- call: call-log duration
   dropped              INTEGER,                   -- call: released before the window ended after connecting
-  voice_rat            TEXT,                      -- call: GSM / UMTS / VoLTE / VoNR seen in call, e.g. VoLTE>UMTS
   loopback             INTEGER,                   -- sms: sent to this phone
   send_ms              REAL,                      -- sms: submit to sent report
   delivery_ms          REAL,                      -- sms: submit to delivery report

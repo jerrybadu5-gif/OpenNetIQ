@@ -5,6 +5,7 @@ import 'package:opennetiq_mobile/core/methodology.dart';
 import 'package:opennetiq_mobile/core/uuid7.dart';
 import 'package:opennetiq_mobile/data/local/drift_qoe_store.dart';
 import 'package:opennetiq_mobile/data/repositories/platform_qoe_engine.dart';
+import 'package:opennetiq_mobile/domain/entities/network_type.dart';
 import 'package:opennetiq_mobile/domain/entities/qoe_test.dart';
 import 'package:opennetiq_mobile/domain/repositories/qoe_repository.dart';
 import 'package:opennetiq_mobile/features/location/application/location_providers.dart';
@@ -94,7 +95,8 @@ class QoeTestController extends Notifier<QoeRunState> {
     String? server;
     try {
       settings = await ref.read(qoeSettingsProvider.future);
-      if (kinds.contains(QoeKind.file)) {
+      if (kinds.contains(QoeKind.file) &&
+          settings.fileProtocol == FileProtocol.http) {
         server = await ref.read(speedTestServerProvider.future);
       }
     } on Object catch (e) {
@@ -135,13 +137,13 @@ class QoeTestController extends Notifier<QoeRunState> {
       );
       final at = context.now();
       final QoeResult result;
-      if (kind == QoeKind.file && server == null) {
-        result = QoeResult(
-          kind: kind,
+      if (kind == QoeKind.file) {
+        result = await _file(
+          settings: settings,
+          server: server,
+          upload: upload,
           label: label,
-          target: '',
-          status: TestStatus.failed,
-          error: 'Set the test server on the Speed test screen',
+          networkType: radio?.networkType,
         );
       } else {
         result = await switch (kind) {
@@ -154,11 +156,7 @@ class QoeTestController extends Notifier<QoeRunState> {
             duration: Duration(seconds: settings.videoSeconds),
           ),
           QoeKind.app => engine.app(target!),
-          QoeKind.file => engine.file(
-            serverUrl: server!,
-            sizeMib: settings.fileSizeMib,
-            upload: upload,
-          ),
+          QoeKind.file => throw StateError('handled above'),
         };
       }
       if (!state.running) break; // cancelled: the interrupted result is dropped
@@ -190,6 +188,62 @@ class QoeTestController extends Notifier<QoeRunState> {
       results: List.unmodifiable(results),
       error: error,
     );
+  }
+
+  /// HTTP or FTP transfer (M14) with the serving level tracked throughout.
+  Future<QoeResult> _file({
+    required QoeSettings settings,
+    required String? server,
+    required bool upload,
+    required String label,
+    required NetworkType? networkType,
+  }) async {
+    QoeResult failed(String error) => QoeResult(
+      kind: QoeKind.file,
+      label: label,
+      target: '',
+      status: TestStatus.failed,
+      error: error,
+      direction: upload ? 'upload' : 'download',
+      protocol: settings.fileProtocol.wireValue,
+    );
+    final engine = ref.read(qoeEngineProvider);
+    final tracker = ref.read(testContextProvider).trackServingLevel();
+    final QoeResult result;
+    ({double? meanDbm, String? rat}) level;
+    try {
+      if (settings.fileProtocol == FileProtocol.ftp) {
+        if (!settings.ftpConfigured) {
+          result = failed(
+            'Set the FTP server, user and password in Experience tests options',
+          );
+        } else {
+          result = await engine.ftp(
+            url: settings.ftpUrl.trim(),
+            user: settings.ftpUser.trim(),
+            password: settings.ftpPassword,
+            sizeMib: upload
+                ? settings.ftpUploadMib
+                : settings.ftpSizeAuto
+                ? QoeSettings.ftpSizeFor(networkType)
+                : settings.ftpDownloadMib,
+            upload: upload,
+            maxDuration: Duration(seconds: settings.ftpMaxSeconds),
+          );
+        }
+      } else if (server == null) {
+        result = failed('Set the test server on the Speed test screen');
+      } else {
+        result = await engine.file(
+          serverUrl: server,
+          sizeMib: settings.fileSizeMib,
+          upload: upload,
+        );
+      }
+    } finally {
+      level = tracker.finish();
+    }
+    return result.withLevel(level.meanDbm, level.rat);
   }
 
   Future<void> cancel() async {

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/features/campaign/application/campaign_controller.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
@@ -21,6 +22,29 @@ typedef TestLink = ({String? sessionId, String? measurementId});
 /// Radio/GPS context shared by active tests (speed #19, latency #21):
 /// start snapshot, RAT-change tracking and the session link.
 /// The caller keeps radio and location subscribed while the test runs.
+/// Serving-cell level seen while a transfer runs (Rule Schedule 2: signal
+/// level recorded on the FTP download samples).
+class LevelTracker {
+  LevelTracker(this._close);
+
+  final void Function() _close;
+  final List<double> _levels = [];
+  String? _rat;
+
+  void add(double level, String rat) {
+    _levels.add(level);
+    _rat ??= rat;
+  }
+
+  /// Stops tracking; mean of dBm values and the serving RAT, or nulls.
+  ({double? meanDbm, String? rat}) finish() {
+    _close();
+    if (_levels.isEmpty) return (meanDbm: null, rat: _rat);
+    final mean = _levels.reduce((a, b) => a + b) / _levels.length;
+    return (meanDbm: (mean * 10).roundToDouble() / 10, rat: _rat);
+  }
+}
+
 class TestContextService {
   TestContextService(this._ref);
 
@@ -40,6 +64,19 @@ class TestContextService {
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }
     return null;
+  }
+
+  /// Records the primary serving cell's level from every radio snapshot
+  /// until [LevelTracker.finish].
+  LevelTracker trackServingLevel() {
+    late final LevelTracker tracker;
+    final sub = _ref.listen(radioSnapshotProvider, (previous, next) {
+      final cell = next.value?.primaryCell;
+      final level = cell?.levelDbm;
+      if (cell != null && level != null) tracker.add(level, cell.rat.wireValue);
+    }, fireImmediately: true);
+    tracker = LevelTracker(sub.close);
+    return tracker;
   }
 
   LocationStatus? latestLocation() =>
@@ -75,8 +112,10 @@ class TestContextService {
     final info = await _ref.read(deviceInfoSourceProvider).getDeviceInfo();
     final deviceId = await _ref.read(deviceRegistryProvider).ensureDevice(info);
     final sessions = _ref.read(sessionRepositoryProvider);
+    final tags = await currentCampaignTags(_ref);
     final session = await sessions.createSession(
       deviceId: deviceId,
+      tags: tags,
       name: RecordingController.defaultName(startedAt.toLocal())
           .replaceFirst('Session', label),
       type: SessionType.singleTest,

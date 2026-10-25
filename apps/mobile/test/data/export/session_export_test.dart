@@ -77,6 +77,9 @@ void main() {
 
     final nsa = row(1);
     expect(nsa['measurement_id'], 'm1');
+    expect(nsa['region'], 'Southern');
+    expect(nsa['area_class'], 'urban');
+    expect(nsa['location_name'], 'Waigani');
     expect(nsa['network_type'], 'NR_NSA');
     expect(nsa['operator'], 'Digicel, PNG');
     expect(nsa['device_model'], 'SM-A546E');
@@ -105,7 +108,10 @@ void main() {
   test('tests CSV: both kinds, time order, located by their sample', () async {
     final rows = parseCsv((await builder()).testsCsv());
     final header = rows.first;
-    expect(header, SessionExportBuilder.testColumns);
+    expect(header, [
+      ...SessionExportBuilder.testColumns,
+      ...SessionExportBuilder.tagColumns,
+    ]);
     expect(rows, hasLength(3));
     final latency = Map.fromIterables(header, rows[1]);
     final speed = Map.fromIterables(header, rows[2]);
@@ -124,7 +130,10 @@ void main() {
 
   test('QoE CSV: one row per test, located by its sample', () async {
     final rows = parseCsv((await builder()).qoeCsv());
-    expect(rows.first, SessionExportBuilder.qoeColumns);
+    expect(rows.first, [
+      ...SessionExportBuilder.qoeColumns,
+      ...SessionExportBuilder.tagColumns,
+    ]);
     final r = Map.fromIterables(rows.first, rows[1]);
     expect(r['kind'], 'web');
     expect(r['label'], 'Google');
@@ -135,7 +144,10 @@ void main() {
 
   test('voice/SMS CSV: masked number only, located by its sample', () async {
     final rows = parseCsv((await builder()).voiceSmsCsv());
-    expect(rows.first, SessionExportBuilder.voiceSmsColumns);
+    expect(rows.first, [
+      ...SessionExportBuilder.voiceSmsColumns,
+      ...SessionExportBuilder.tagColumns,
+    ]);
     final r = Map.fromIterables(rows.first, rows[1]);
     expect(r['kind'], 'call');
     expect(r['target_masked'], '••67');
@@ -145,6 +157,7 @@ void main() {
     expect(r['voice_rat'], 'VoLTE>UMTS');
     expect(r['lat'], '-9.45');
     expect(r['receive_ms'], '');
+    expect(r['location_name'], 'Waigani');
   });
 
   test('GeoJSON: RFC 7946 track, located samples and tests', () async {
@@ -162,6 +175,9 @@ void main() {
       'qoe_test',
       'voice_sms_test',
     ]);
+    for (final f in features) {
+      expect((f['properties']! as Map)['area_class'], 'urban');
+    }
     final track = features.first;
     final geometry = track['geometry']! as Map;
     expect(geometry['type'], 'LineString');

@@ -50,6 +50,9 @@ class DriftQoeStore implements QoeStore {
       bytes: Value(q.bytes),
       rateMbps: Value(q.rateMbps),
       direction: Value(q.direction),
+      protocol: Value(q.protocol),
+      servingLevelDbm: Value(q.servingLevelDbm),
+      servingRat: Value(q.servingRat),
       createdAt: created,
     );
   }
@@ -98,6 +101,9 @@ class DriftQoeStore implements QoeStore {
         bytes: r.bytes,
         rateMbps: r.rateMbps,
         direction: r.direction,
+        protocol: r.protocol,
+        servingLevelDbm: r.servingLevelDbm,
+        servingRat: r.servingRat,
       ),
     );
   }

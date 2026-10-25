@@ -74,5 +74,28 @@ class PlatformQoeEngine implements QoeEngine {
   );
 
   @override
+  Future<QoeResult> ftp({
+    required String url,
+    required String user,
+    required String password,
+    required int sizeMib,
+    required bool upload,
+    required Duration maxDuration,
+  }) => _call(
+    'ftp',
+    {
+      'url': url,
+      'user': user,
+      'password': password,
+      'size_mib': sizeMib,
+      'direction': upload ? 'upload' : 'download',
+      'max_ms': maxDuration.inMilliseconds,
+    },
+    QoeKind.file,
+    'FTP $sizeMib MB ${upload ? 'upload' : 'download'}',
+    url,
+  );
+
+  @override
   Future<void> cancel() => _channel.invokeMethod<void>('cancel');
 }

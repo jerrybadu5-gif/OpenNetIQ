@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/features/campaign/presentation/campaign_card.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
@@ -171,6 +172,8 @@ class _DriveTestSetupState extends ConsumerState<DriveTestSetup> {
             hintText: 'e.g. Digicel PNG',
           ),
         ),
+        const SizedBox(height: 16),
+        CampaignTagsCard(enabled: !starting),
         const SizedBox(height: 16),
         const BatteryOptimizationCard(),
         const SizedBox(height: 16),

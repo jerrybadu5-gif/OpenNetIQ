@@ -72,6 +72,32 @@ class FakeQoeEngine implements QoeEngine {
   }
 
   @override
+  Future<QoeResult> ftp({
+    required String url,
+    required String user,
+    required String password,
+    required int sizeMib,
+    required bool upload,
+    required Duration maxDuration,
+  }) async {
+    calls.add(
+      'ftp:$sizeMib:${upload ? 'up' : 'down'}:$url:$user:${maxDuration.inSeconds}',
+    );
+    await _wait();
+    return QoeResult(
+      kind: QoeKind.file,
+      label: 'FTP $sizeMib MB ${upload ? 'upload' : 'download'}',
+      target: url,
+      status: TestStatus.ok,
+      totalMs: 40000,
+      rateMbps: 20,
+      bytes: sizeMib * 1048576,
+      direction: upload ? 'upload' : 'download',
+      protocol: 'ftp',
+    );
+  }
+
+  @override
   Future<void> cancel() async => cancels++;
 }
 
@@ -81,11 +107,25 @@ class FakeTestContext extends TestContextService {
   final links = <String>[];
   Object? linkError;
 
+  /// Levels reported to each [trackServingLevel] (dBm, RAT).
+  List<(double, String)> levels = const [(-95, 'LTE'), (-99, 'LTE')];
+  RadioSnapshot? radio;
+
+  @override
+  LevelTracker trackServingLevel() {
+    final t = LevelTracker(() {});
+    for (final (l, rat) in levels) {
+      t.add(l, rat);
+    }
+    return t;
+  }
+
   @override
   DateTime now() => DateTime.utc(2026, 10, 25, 1);
 
   @override
-  Future<RadioSnapshot?> awaitRadio(bool Function() stillRunning) async => null;
+  Future<RadioSnapshot?> awaitRadio(bool Function() stillRunning) async =>
+      radio;
 
   @override
   LocationStatus? latestLocation() => null;

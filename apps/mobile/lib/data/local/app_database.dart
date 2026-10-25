@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'opennetiq.sqlite';
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -46,11 +46,37 @@ class AppDatabase extends _$AppDatabase {
         // Rebuilds consent_log for the new voice_sms scope CHECK.
         await m.alterTable(TableMigration(consentLog));
       }
+      if (from < 4) {
+        // v4: campaign tags (M15), FTP columns (M14), voice technology.
+        // Development builds shipped several v3 layouts, so each column is
+        // added only when missing.
+        await _addMissing(m, sessions, sessions.region);
+        await _addMissing(m, sessions, sessions.areaClass);
+        await _addMissing(m, sessions, sessions.locationName);
+        await _addMissing(m, qoeTests, qoeTests.protocol);
+        await _addMissing(m, qoeTests, qoeTests.servingLevelDbm);
+        await _addMissing(m, qoeTests, qoeTests.servingRat);
+        await _addMissing(m, voiceSmsTests, voiceSmsTests.voiceRat);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+}
+
+extension on AppDatabase {
+  Future<void> _addMissing(
+    Migrator m,
+    TableInfo<Table, Object?> table,
+    GeneratedColumn<Object> column,
+  ) async {
+    final info = await customSelect(
+      'PRAGMA table_info(${table.actualTableName})',
+    ).get();
+    if (info.any((r) => r.read<String>('name') == column.name)) return;
+    await m.addColumn(table, column);
+  }
 }
 
 QueryExecutor _openOnDevice() => LazyDatabase(() async {

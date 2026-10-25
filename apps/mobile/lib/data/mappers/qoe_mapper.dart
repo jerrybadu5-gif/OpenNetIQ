@@ -41,6 +41,8 @@ abstract final class QoeMapper {
       bytes: _i(m['bytes']),
       rateMbps: _d(m['rate_mbps']),
       direction: m['direction'] as String?,
+      protocol:
+          m['protocol'] as String? ?? (kind == QoeKind.file ? 'http' : null),
     );
   }
 }

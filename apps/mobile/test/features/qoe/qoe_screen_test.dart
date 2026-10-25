@@ -162,7 +162,10 @@ void main() {
     );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Video 60 s · file 10 MB'), findsOneWidget);
+    expect(
+      find.textContaining('Video 60 s · file transfer: 10 MB HTTP'),
+      findsOneWidget,
+    );
     for (final label in ['Web browsing', 'App reachability']) {
       await tester.tap(find.text(label).last);
       await tester.pumpAndSettle();
@@ -177,6 +180,49 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('FTP options validate and save', (tester) async {
+    await pump(tester);
+    await tester.tap(find.text('Options'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('FTP'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('NICTA QoS Rule 2022 Schedule 2'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'FTP server'),
+      'http://wrong/',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('FTP server must start with ftp://'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'FTP server'),
+      'ftp://ftp.test:21/',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Password'),
+      'long-test-pass',
+    );
+    await tester.tap(find.text('Download size by network'));
+    await tester.pumpAndSettle();
+    expect(find.text('Download size'), findsOneWidget);
+    await tester.tap(find.text('100 MB').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('50 MB').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    final saved = settings.values[qoeSettingsKey]!;
+    expect(saved, contains('"file_protocol":"ftp"'));
+    expect(saved, contains('"ftp_url":"ftp://ftp.test:21/"'));
+    expect(saved, contains('"ftp_size_auto":false'));
+    expect(saved, contains('"ftp_download_mib":50'));
+    expect(find.textContaining('file transfer: FTP'), findsOneWidget);
+    expect(find.textContaining('not set up'), findsNothing);
   });
 
   testWidgets('history and errors', (tester) async {

@@ -1,4 +1,4 @@
-name: Speed-test server
+name: Test servers (speed test + FTP)
 
 on:
   push:
@@ -13,21 +13,26 @@ permissions:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    env:
+      # Throwaway credential for the CI container only (spec v3 M14).
+      FTP_PASSWORD: ci-only-${{ github.run_id }}-pw
     defaults:
       run:
         working-directory: infra/test-server
     steps:
       - uses: actions/checkout@v7
       - name: Build and start (HTTP)
-        run: docker compose up -d --build --wait --wait-timeout 60
-      - name: Smoke test (HTTP)
+        run: docker compose up -d --build --wait --wait-timeout 180
+      - name: Smoke test (HTTP + FTP)
+        env:
+          FTP_URL: ftp://127.0.0.1:21
         run: ./smoke_test.sh http://127.0.0.1:8080
       - name: Enable HTTPS with a throwaway certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=localhost" \
             -keyout certs/privkey.pem -out certs/fullchain.pem
           chmod 644 certs/*.pem
-          SPEEDTEST_HTTPS=required docker compose up -d --force-recreate --wait --wait-timeout 60
+          SPEEDTEST_HTTPS=required docker compose up -d --force-recreate --wait --wait-timeout 180
       - name: Smoke test (HTTPS)
         run: ./smoke_test.sh https://127.0.0.1:8443
       - name: Logs

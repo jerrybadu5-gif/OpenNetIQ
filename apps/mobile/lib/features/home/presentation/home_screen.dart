@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:opennetiq_mobile/features/campaign/presentation/campaign_card.dart';
 import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/core/flavor.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
@@ -25,6 +26,10 @@ class HomeScreen extends ConsumerWidget {
       body: ListView(
         children: [
           const RecordingBanner(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: CampaignTagsCard(),
+          ),
           ListTile(
             leading: const Icon(Icons.signal_cellular_alt),
             title: const Text('Signal monitor'),

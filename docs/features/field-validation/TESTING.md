@@ -18,3 +18,5 @@ geometry), CLI exit codes, JSON output and help text.
 2. Export both; run `onq-validate radio` — expect matches > 0 and a PASS or
    a small, explainable difference. Fix column mapping now, not after the
    drive.
+
+- `tests/test_nicta.py`: Appendix A/B on synthetic exports with hand-calculated rates, period filter and 80/90 % share by year, untagged rows, sample-count shortfalls, CLI Markdown/CSV/Excel/JSON outputs.

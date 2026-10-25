@@ -14,6 +14,16 @@ abstract interface class QoeEngine {
     required bool upload,
   });
 
+  /// FTP download ([upload] false) or upload of [sizeMib] MiB (M14).
+  Future<QoeResult> ftp({
+    required String url,
+    required String user,
+    required String password,
+    required int sizeMib,
+    required bool upload,
+    required Duration maxDuration,
+  });
+
   Future<void> cancel();
 }
 

@@ -134,53 +134,50 @@ void main() {
     });
   });
 
-  test(
-    'schema v2 upgrades to v3, keeping consent and adding voice_sms',
-    () async {
-      final raw = NativeDatabase.memory(
-        setup: (db) {
-          final ddl = File('../../database/mobile/schema_v2.sql')
-              .readAsStringSync();
-          final noComments = ddl
-              .split('\n')
-              .map((l) => l.split('--').first)
-              .join('\n');
-          for (final stmt in noComments.split(';')) {
-            final sql = stmt.trim();
-            if (sql.isEmpty || sql.startsWith('PRAGMA journal_mode')) continue;
-            db.execute(sql);
-          }
-          db
-            ..execute(
-              "INSERT INTO consent_log VALUES ('c1','location',1,'1.0',"
-              "'2026-10-01T00:00:00.000Z')",
-            )
-            ..execute('PRAGMA user_version = 2');
-        },
-      );
-      final db = AppDatabase(DatabaseConnection(raw));
-      addTearDown(db.close);
-      final store = DriftConsentStore(db);
-      final before = await store.ledger();
-      expect(before.single.id, 'c1');
-      await store.record(
-        {ConsentScope.voiceSms},
-        granted: true,
-        policyVersion: '1.1',
-      );
-      final ledger = await store.ledger();
-      expect(ledger.map((r) => r.scope), [
-        ConsentScope.voiceSms,
-        ConsentScope.location,
-      ]);
-      final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 3);
-      await expectLater(
-        db.customStatement(
-          "INSERT INTO consent_log VALUES ('c9','nope',1,'1.1','x')",
-        ),
-        throwsA(anything),
-      );
-    },
-  );
+  test('schema v2 upgrades to the current version, keeping consent and adding voice_sms', () async {
+    final raw = NativeDatabase.memory(
+      setup: (db) {
+        final ddl = File('../../database/mobile/schema_v2.sql')
+            .readAsStringSync();
+        final noComments = ddl
+            .split('\n')
+            .map((l) => l.split('--').first)
+            .join('\n');
+        for (final stmt in noComments.split(';')) {
+          final sql = stmt.trim();
+          if (sql.isEmpty || sql.startsWith('PRAGMA journal_mode')) continue;
+          db.execute(sql);
+        }
+        db
+          ..execute(
+            "INSERT INTO consent_log VALUES ('c1','location',1,'1.0',"
+            "'2026-10-01T00:00:00.000Z')",
+          )
+          ..execute('PRAGMA user_version = 2');
+      },
+    );
+    final db = AppDatabase(DatabaseConnection(raw));
+    addTearDown(db.close);
+    final store = DriftConsentStore(db);
+    final before = await store.ledger();
+    expect(before.single.id, 'c1');
+    await store.record(
+      {ConsentScope.voiceSms},
+      granted: true,
+      policyVersion: '1.1',
+    );
+    final ledger = await store.ledger();
+    expect(ledger.map((r) => r.scope), [
+      ConsentScope.voiceSms,
+      ConsentScope.location,
+    ]);
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 4);
+    await expectLater(
+      db.customStatement(
+        "INSERT INTO consent_log VALUES ('c9','nope',1,'1.1','x')",
+      ),
+      throwsA(anything),
+    );
+  });
 }

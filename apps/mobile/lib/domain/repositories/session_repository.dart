@@ -1,3 +1,4 @@
+import 'package:opennetiq_mobile/domain/entities/campaign_tags.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/entities/radio_snapshot.dart';
@@ -11,6 +12,7 @@ abstract interface class SessionRepository {
     required int samplingIntervalMs,
     String? operatorUnderTest,
     String? notes,
+    CampaignTags tags = CampaignTags.none,
   });
 
   /// Sets status `recording` and `started_at` (first start only).
