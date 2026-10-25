@@ -181,4 +181,46 @@ void main() {
     expect(nr.siteKey, 'NR:537-03:gnb7');
     expect(CellLayer.empty.cells, isEmpty);
   });
+
+  test(
+    'inconsistent or extreme timing advance never yields wild positions',
+    () {
+      final rnd = math.Random(7);
+      // Near-collinear drive with noisy and partly absurd TA values.
+      final list = [
+        for (var x = -800.0; x <= 800; x += 40)
+          CellSighting(
+            measurementId: 'n${x.round()}',
+            timestamp: DateTime.utc(
+              2026,
+              10,
+              25,
+            ).add(Duration(seconds: x.round() + 900)),
+            isServing: true,
+            rat: Rat.lte,
+            lat: offset(x, 300 + rnd.nextDouble()).$1,
+            lon: offset(x, 300).$2,
+            goodFix: true,
+            mcc: '537',
+            mnc: '03',
+            cellId: 1,
+            enbId: 9,
+            pci: 1,
+            levelDbm: -80 - rnd.nextDouble() * 20,
+            timingAdvance: rnd.nextBool() ? rnd.nextInt(1283) : rnd.nextInt(20),
+          ),
+      ];
+      final site = CellLayerBuilder.build(list).sites.single;
+      expect(site.lat.abs(), lessThanOrEqualTo(90));
+      expect(site.lon.abs(), lessThanOrEqualTo(180));
+      expect(distanceM(site.lat, site.lon), lessThan(5000));
+    },
+  );
+
+  test('all sightings at one spot with TA: no crash, centroid', () {
+    final list = [for (var i = 0; i < 10; i++) sighting(100, 100, cellId: 2)];
+    final site = CellLayerBuilder.build(list).sites.single;
+    expect(site.method, SiteMethod.levelCentroid);
+    expect(distanceM(site.lat, site.lon), lessThan(200));
+  });
 }
