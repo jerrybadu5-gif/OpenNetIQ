@@ -42,6 +42,13 @@ class Sessions extends Table {
   )();
   late final operatorUnderTest = text().nullable()();
   late final notes = text().nullable()();
+
+  /// Campaign tags (schema v3, spec v3 M15).
+  late final region = text().nullable()();
+  late final Column<String> areaClass = text().nullable().check(
+    areaClass.isIn(const ['urban', 'semi_urban', 'rural']),
+  )();
+  late final locationName = text().nullable()();
   late final methodologyVersion = text()();
   late final startedAt = text().nullable()();
   late final endedAt = text().nullable()();

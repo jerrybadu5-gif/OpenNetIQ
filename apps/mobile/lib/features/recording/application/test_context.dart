@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/features/campaign/application/campaign_controller.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
@@ -75,8 +76,10 @@ class TestContextService {
     final info = await _ref.read(deviceInfoSourceProvider).getDeviceInfo();
     final deviceId = await _ref.read(deviceRegistryProvider).ensureDevice(info);
     final sessions = _ref.read(sessionRepositoryProvider);
+    final tags = await currentCampaignTags(_ref);
     final session = await sessions.createSession(
       deviceId: deviceId,
+      tags: tags,
       name: RecordingController.defaultName(startedAt.toLocal())
           .replaceFirst('Session', label),
       type: SessionType.singleTest,

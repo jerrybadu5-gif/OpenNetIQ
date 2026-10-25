@@ -75,10 +75,24 @@ class SessionExportBuilder {
 
   final SessionExportData data;
 
+  /// Campaign tags of the session (spec v3 M15), in every CSV and feature.
+  static const tagColumns = ['region', 'area_class', 'location_name'];
+
+  List<Object?> get _tags => [
+    data.session.region,
+    data.session.areaClass,
+    data.session.locationName,
+  ];
+
+  Map<String, Object?> get _tagProperties => {
+    for (var i = 0; i < tagColumns.length; i++) tagColumns[i]: _tags[i],
+  };
+
   static const sampleColumns = [
     'session_id',
     'session_name',
     'session_type',
+    ...tagColumns,
     'device_id',
     'device_manufacturer',
     'device_model',
@@ -207,6 +221,7 @@ class SessionExportBuilder {
       session.sessionId,
       session.name,
       session.sessionType,
+      ..._tags,
       session.deviceId,
       device?.manufacturer,
       device?.model,
@@ -354,7 +369,12 @@ class SessionExportBuilder {
   }
 
   /// Speed and latency tests of the session, in time order.
-  String testsCsv() => csvDocument(testColumns, _testRows());
+  String testsCsv() => csvDocument(
+    [...testColumns, ...tagColumns],
+    [
+      for (final r in _testRows()) [...r, ..._tags],
+    ],
+  );
 
   static const qoeColumns = [
     'test_id',
@@ -393,40 +413,44 @@ class SessionExportBuilder {
     final byId = _samplesById;
     final rows = [...data.qoeTests]
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return csvDocument(qoeColumns, [
-      for (final t in rows)
-        [
-          t.testId,
-          t.sessionId,
-          t.measurementId,
-          t.timestamp,
-          t.methodologyVersion,
-          t.kind,
-          t.label,
-          t.target,
-          t.status,
-          t.error,
-          byId[t.measurementId]?.lat,
-          byId[t.measurementId]?.lon,
-          byId[t.measurementId]?.networkType,
-          t.totalMs,
-          t.dnsMs,
-          t.connectMs,
-          t.tlsMs,
-          t.ttfbMs,
-          t.domMs,
-          t.httpStatus,
-          t.startDelayMs,
-          t.rebufferCount,
-          t.rebufferMs,
-          t.playedMs,
-          t.bitrateKbps,
-          t.resolution,
-          t.bytes,
-          t.rateMbps,
-          t.direction,
-        ],
-    ]);
+    return csvDocument(
+      [...qoeColumns, ...tagColumns],
+      [
+        for (final t in rows)
+          [
+            t.testId,
+            t.sessionId,
+            t.measurementId,
+            t.timestamp,
+            t.methodologyVersion,
+            t.kind,
+            t.label,
+            t.target,
+            t.status,
+            t.error,
+            byId[t.measurementId]?.lat,
+            byId[t.measurementId]?.lon,
+            byId[t.measurementId]?.networkType,
+            t.totalMs,
+            t.dnsMs,
+            t.connectMs,
+            t.tlsMs,
+            t.ttfbMs,
+            t.domMs,
+            t.httpStatus,
+            t.startDelayMs,
+            t.rebufferCount,
+            t.rebufferMs,
+            t.playedMs,
+            t.bitrateKbps,
+            t.resolution,
+            t.bytes,
+            t.rateMbps,
+            t.direction,
+            ..._tags,
+          ],
+      ],
+    );
   }
 
   static const voiceSmsColumns = [
@@ -461,35 +485,39 @@ class SessionExportBuilder {
     final byId = _samplesById;
     final rows = [...data.voiceSmsTests]
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return csvDocument(voiceSmsColumns, [
-      for (final t in rows)
-        [
-          t.testId,
-          t.sessionId,
-          t.measurementId,
-          t.timestamp,
-          t.methodologyVersion,
-          t.kind,
-          t.label,
-          t.targetMasked,
-          t.status,
-          t.outcome,
-          t.error,
-          byId[t.measurementId]?.lat,
-          byId[t.measurementId]?.lon,
-          byId[t.measurementId]?.networkType,
-          t.windowS,
-          t.callMs,
-          t.setupMs,
-          t.connectedS,
-          t.dropped,
-          t.voiceRat,
-          t.loopback,
-          t.sendMs,
-          t.deliveryMs,
-          t.receiveMs,
-        ],
-    ]);
+    return csvDocument(
+      [...voiceSmsColumns, ...tagColumns],
+      [
+        for (final t in rows)
+          [
+            t.testId,
+            t.sessionId,
+            t.measurementId,
+            t.timestamp,
+            t.methodologyVersion,
+            t.kind,
+            t.label,
+            t.targetMasked,
+            t.status,
+            t.outcome,
+            t.error,
+            byId[t.measurementId]?.lat,
+            byId[t.measurementId]?.lon,
+            byId[t.measurementId]?.networkType,
+            t.windowS,
+            t.callMs,
+            t.setupMs,
+            t.connectedS,
+            t.dropped,
+            t.voiceRat,
+            t.loopback,
+            t.sendMs,
+            t.deliveryMs,
+            t.receiveMs,
+            ..._tags,
+          ],
+      ],
+    );
   }
 
   /// RFC 7946 FeatureCollection (WGS 84, [lon, lat(, alt)]). Samples without
@@ -632,6 +660,10 @@ class SessionExportBuilder {
           'methodology_version': t.methodologyVersion,
         },
       });
+    }
+    final tags = _tagProperties;
+    for (final f in features) {
+      (f['properties']! as Map<String, Object?>).addAll(tags);
     }
     return jsonEncode({'type': 'FeatureCollection', 'features': features});
   }

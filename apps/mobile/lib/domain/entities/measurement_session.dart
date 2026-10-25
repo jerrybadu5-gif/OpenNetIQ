@@ -1,3 +1,5 @@
+import 'package:opennetiq_mobile/domain/entities/campaign_tags.dart';
+
 /// Kind of measurement session (`sessions.session_type`).
 enum SessionType {
   drive('drive', 'Drive'),
@@ -57,6 +59,7 @@ class MeasurementSession {
     this.startedAt,
     this.endedAt,
     this.distanceM,
+    this.tags = CampaignTags.none,
   });
 
   final String id;
@@ -74,6 +77,9 @@ class MeasurementSession {
   final DateTime? startedAt;
   final DateTime? endedAt;
   final double? distanceM;
+
+  /// Region, area class and location (campaign tags, spec v3 M15).
+  final CampaignTags tags;
 
   /// Elapsed recording time; uses [now] while the session is still active.
   Duration? duration({DateTime? now}) {

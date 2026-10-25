@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:opennetiq_mobile/domain/entities/campaign_tags.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
 import 'package:opennetiq_mobile/domain/repositories/session_repository.dart';
 
@@ -66,6 +67,7 @@ class FakeSessionRepository implements SessionRepository {
     required int samplingIntervalMs,
     String? operatorUnderTest,
     String? notes,
+    CampaignTags tags = CampaignTags.none,
   }) => throw UnimplementedError();
 
   @override

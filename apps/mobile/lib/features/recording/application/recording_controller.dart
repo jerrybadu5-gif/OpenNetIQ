@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opennetiq_mobile/features/campaign/application/campaign_controller.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/domain/entities/location_status.dart';
 import 'package:opennetiq_mobile/domain/entities/measurement_session.dart';
@@ -194,9 +195,11 @@ class RecordingController extends Notifier<RecordingState> {
           .ensureDevice(info);
       final sessions = ref.read(sessionRepositoryProvider);
       final operatorName = options.operatorUnderTest?.trim();
+      final tags = await currentCampaignTags(ref);
       final session = await sessions.createSession(
         deviceId: deviceId,
         name: sessionName,
+        tags: tags,
         type: options.type,
         samplingIntervalMs: options.interval.inMilliseconds,
         operatorUnderTest: operatorName == null || operatorName.isEmpty

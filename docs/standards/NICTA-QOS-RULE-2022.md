@@ -61,7 +61,7 @@ test server). Schedule 5 is operator reporting.
 | 10(5) | No re-measurement at the same location within 2 years (except to reassess) | Report could warn | Gap |
 | 13(7) | No manipulation (network changes, prioritised SIMs, device changes) | Device model and Android version, operator, PLMN, RAT and cell identity in every record. Export integrity hashes proposed | Partial |
 
-## Proposed backlog (needs maintainer decision)
+## Backlog (decided 2026-10-25: items 1–3 in v0.1.0, spec v3 M14–M16)
 
 1. **FTP throughput test** (Schedule 2 G8). Kotlin FTP client (Apache Commons
    Net, Apache-2.0) with passive RETR/STOR, file size by RAT (100 MB LTE,

@@ -24,6 +24,9 @@ CREATE TABLE sessions (
   sampling_interval_ms INTEGER NOT NULL CHECK (sampling_interval_ms IN (1000,2000,5000)),
   operator_under_test  TEXT,
   notes                TEXT,
+  region               TEXT,                      -- v3 campaign tags (spec v3 M15), e.g. Southern
+  area_class           TEXT CHECK (area_class IN ('urban','semi_urban','rural')),
+  location_name        TEXT,                      -- place name, e.g. Waigani
   methodology_version  TEXT NOT NULL,
   started_at           TEXT,
   ended_at             TEXT,
