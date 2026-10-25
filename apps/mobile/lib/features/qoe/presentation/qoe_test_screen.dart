@@ -330,9 +330,10 @@ class _TargetsDialogState extends State<_TargetsDialog> {
           children: [
             Text(
               video
-                  ? 'One per line: Name | URL | page. Add "page" for videos on '
-                        'web pages (YouTube, Facebook, game streams); leave it '
-                        'out for direct HLS/DASH/MP4 streams.'
+                  ? 'One per line: Name | URL, optionally | page or | stream. '
+                        'Without it, .m3u8/.mpd/.mp4 links are direct streams '
+                        'and other links (YouTube, Facebook, game sites) are '
+                        'videos on a web page.'
                   : 'One per line: Name | URL',
             ),
             TextField(

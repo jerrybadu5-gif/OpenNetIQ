@@ -32,6 +32,30 @@ void main() {
     expect(VideoMode.fromWire('nope'), VideoMode.stream);
   });
 
+  test('format 1 settings re-detect page videos saved as streams', () {
+    final legacy = QoeSettings.fromJson({
+      'videos': [
+        {
+          'name': 'YT',
+          'url': 'https://m.youtube.com/watch?v=x',
+          'mode': 'stream',
+        },
+        {'name': 'HLS', 'url': 'https://cdn/a.m3u8', 'mode': 'stream'},
+      ],
+    });
+    expect(legacy.videos.map((t) => t.mode), [
+      VideoMode.page,
+      VideoMode.stream,
+    ]);
+    final current = QoeSettings.fromJson({
+      'version': 2,
+      'videos': [
+        {'name': 'Live', 'url': 'https://srv/live', 'mode': 'stream'},
+      ],
+    });
+    expect(current.videos.single.mode, VideoMode.stream);
+  });
+
   test('target lines parse and print', () {
     final (targets, errors) = QoeTarget.parseLines(
       'YouTube | https://www.youtube.com/watch?v=abc | page\n'
@@ -47,8 +71,23 @@ void main() {
     expect(
       QoeTarget.toLines(targets, video: true),
       'YouTube | https://www.youtube.com/watch?v=abc | page\n'
-      'cdn.example.org | https://cdn.example.org/live.m3u8',
+      'cdn.example.org | https://cdn.example.org/live.m3u8 | stream',
     );
+    final (auto, _) = QoeTarget.parseLines(
+      'm.youtube.com | https://m.youtube.com/watch?v=4U71uoW4oec&pp=0gcJCbgCo7VqN5tDiggCQAE%3D\n'
+      'Own | https://srv/live | stream\n'
+      'Clip | https://cdn/x.MP4\n'
+      'Dash | https://cdn/v/manifest(format=mpd)\n'
+      'Twitch | https://www.twitch.tv/somechannel',
+      video: true,
+    );
+    expect(auto.map((t) => t.mode), [
+      VideoMode.page,
+      VideoMode.stream,
+      VideoMode.stream,
+      VideoMode.stream,
+      VideoMode.page,
+    ]);
     final (web, _) = QoeTarget.parseLines('G | https://g/ | page');
     expect(web.single.mode, VideoMode.stream); // page only for videos
   });

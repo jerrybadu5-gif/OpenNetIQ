@@ -1,6 +1,8 @@
 package org.opennetiq.opennetiq_mobile
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -24,6 +26,17 @@ class OpenNetIqApplication : Application() {
         // Channel handlers are registered before Dart starts.
         bridge = MeasurementBridge(this, engine.dartExecutor.binaryMessenger)
         qoe = QoeBridge(this, engine.dartExecutor.binaryMessenger)
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) { qoe.activity = activity }
+            override fun onActivityPaused(activity: Activity) {
+                if (qoe.activity === activity) qoe.activity = null
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
         engine.dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
         FlutterEngineCache.getInstance().put(ENGINE_ID, engine)
     }

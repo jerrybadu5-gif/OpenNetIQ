@@ -1,7 +1,11 @@
 package org.opennetiq.measurement.qoe
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -22,10 +26,15 @@ import androidx.media3.exoplayer.DecoderReuseEvaluation
  *   (adaptive bitrate, real buffering; no surface, so decoding cost does not
  *   affect the result);
  * - `page`: a web page with an HTML5 video (YouTube, Facebook, game streams)
- *   in an off-screen WebView; the first <video> element is muted and played.
+ *   in a WebView shown at the bottom of the app while the test runs (sites
+ *   pause hidden videos); off-screen when the app is in the background. The
+ *   first <video> is muted, kept playing, and its progress is polled.
  * Main thread only.
  */
-class VideoProbe(private val context: Context) {
+class VideoProbe(
+    private val context: Context,
+    private val activity: () -> Activity? = { null },
+) {
     private val main = Handler(Looper.getMainLooper())
     private var finish: ((Map<String, Any?>) -> Unit)? = null
 
@@ -99,12 +108,15 @@ class VideoProbe(private val context: Context) {
         val start = System.nanoTime()
         val stats = PlaybackStats(start)
         var done = false
-        val view = WebView(context.applicationContext)
+        val host = activity()
+        val view = WebView(host ?: context.applicationContext)
+        val overlay = host?.let { show(it, view) }
         val complete: (Map<String, Any?>) -> Unit = { extra ->
             if (!done) {
                 done = true
                 main.removeCallbacksAndMessages(TOKEN)
                 val result = stats.finish(System.nanoTime()) + extra.filterValues { it != null }
+                (overlay?.parent as? ViewGroup)?.removeView(overlay)
                 view.stopLoading()
                 view.destroy()
                 finish = null
@@ -116,7 +128,7 @@ class VideoProbe(private val context: Context) {
         view.settings.domStorageEnabled = true
         view.settings.mediaPlaybackRequiresUserGesture = false
         view.clearCache(true)
-        view.layout(0, 0, 1080, 1920)
+        if (overlay == null) view.layout(0, 0, 1080, 1920)
         view.addJavascriptInterface(
             object {
                 @JavascriptInterface
@@ -141,30 +153,66 @@ class VideoProbe(private val context: Context) {
             }
         }
         view.loadUrl(url)
+        // Single-page sites may finish late: inject again (the script is idempotent).
+        for (delay in longArrayOf(3_000, 6_000, 10_000)) {
+            main.postAtTime(
+                { if (!done) view.evaluateJavascript(PAGE_SCRIPT, null) },
+                TOKEN,
+                SystemClock.uptimeMillis() + delay,
+            )
+        }
         schedule(durationMs) { complete(emptyMap()) }
+    }
+
+    /** 16:9 player strip at the bottom of the activity, removed afterwards. */
+    private fun show(host: Activity, view: WebView): FrameLayout {
+        val width = host.resources.displayMetrics.widthPixels
+        val frame = FrameLayout(host)
+        frame.addView(
+            view,
+            FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width * 9 / 16, Gravity.BOTTOM),
+        )
+        host.addContentView(
+            frame,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
+        )
+        return frame
     }
 
     private companion object {
         val TOKEN = Any()
 
-        /** Hooks the first <video> (now or once it appears), muted autoplay. */
+        /**
+         * Keeps the first <video> playing (muted) and polls its progress every
+         * 500 ms: advancing time = playing, stalled for >= 1 s = buffering.
+         * Polling works where sites swallow media events. Idempotent.
+         */
         const val PAGE_SCRIPT = """
 (function(){
   if (window.__onqHooked) return; window.__onqHooked = true;
-  function hook(v){
-    if (v.__onq) return; v.__onq = true; v.muted = true;
-    ['playing','waiting','ended','error'].forEach(function(n){
-      v.addEventListener(n, function(){ OnqVideo.event(n, v.videoHeight || 0); });
-    });
-    v.addEventListener('resize', function(){ OnqVideo.event('resize', v.videoHeight || 0); });
-    var p = v.play(); if (p && p.catch) p.catch(function(){});
-    if (!v.paused && v.readyState > 2) OnqVideo.event('playing', v.videoHeight || 0);
-  }
-  function scan(){ var v = document.querySelector('video'); if (v) { hook(v); return true; } return false; }
-  if (!scan()) {
-    var o = new MutationObserver(function(){ if (scan()) o.disconnect(); });
-    o.observe(document.documentElement, {childList: true, subtree: true});
-  }
+  var last = -1, playing = false, stall = 0, lastH = 0, hooked = null;
+  function send(n, v){ OnqVideo.event(n, (v && v.videoHeight) || 0); }
+  setInterval(function(){
+    var v = document.querySelector('video');
+    if (!v) return;
+    if (v !== hooked) {
+      hooked = v; last = -1;
+      v.addEventListener('ended', function(){ send('ended', v); });
+      v.addEventListener('error', function(){ send('error', v); });
+    }
+    v.muted = true;
+    if (v.paused && !v.ended) { var p = v.play(); if (p && p.catch) p.catch(function(){}); }
+    var t = v.currentTime;
+    if (t > last + 0.05) {
+      if (!playing) { playing = true; send('playing', v); }
+      stall = 0;
+    } else if (playing && !v.ended) {
+      stall++;
+      if (stall >= 2) { playing = false; send('waiting', v); }
+    }
+    last = t;
+    if (v.videoHeight && v.videoHeight !== lastH) { lastH = v.videoHeight; send('resize', v); }
+  }, 500);
 })()
 """
     }

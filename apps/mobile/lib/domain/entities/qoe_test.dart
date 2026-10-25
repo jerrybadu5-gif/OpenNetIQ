@@ -40,6 +40,17 @@ enum VideoMode {
   final String label;
 
   static VideoMode fromWire(String? v) => v == page.wireValue ? page : stream;
+
+  static final _media = RegExp(
+    r'(\.(m3u8|mpd|mp4|m4v|webm|mkv|mov|ts|mp3|aac)$)|(/manifest)|(\.ism)',
+  );
+
+  /// Media files and manifests are direct streams; anything else (YouTube,
+  /// Facebook, game sites) is a web page with a video on it.
+  static VideoMode detect(String url) {
+    final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
+    return _media.hasMatch(path) ? stream : page;
+  }
 }
 
 /// A named URL (web site, app endpoint or video source).
@@ -64,15 +75,16 @@ class QoeTarget {
     'mode': mode.wireValue,
   };
 
-  /// One target per line: `Name | URL` (video: `Name | URL | page`).
+  /// One target per line: `Name | URL` (video: `Name | URL | page|stream`).
   static String toLines(List<QoeTarget> list, {bool video = false}) => [
     for (final t in list)
-      video && t.mode == VideoMode.page
-          ? '${t.name} | ${t.url} | page'
+      video
+          ? '${t.name} | ${t.url} | ${t.mode.wireValue}'
           : '${t.name} | ${t.url}',
   ].join('\n');
 
-  /// Parses [toLines] text; a bare URL uses its host as the name.
+  /// Parses [toLines] text; a bare URL uses its host as the name. Video
+  /// lines without a mode are detected from the URL ([VideoMode.detect]).
   static (List<QoeTarget>, List<String>) parseLines(
     String text, {
     bool video = false,
@@ -93,9 +105,14 @@ class QoeTarget {
         continue;
       }
       final name = parts.length == 1 || parts[0].isEmpty ? uri.host : parts[0];
-      final mode = video && parts.length > 2 && parts[2].toLowerCase() == 'page'
+      final given = parts.length > 2 ? parts[2].toLowerCase() : '';
+      final mode = !video
+          ? VideoMode.stream
+          : given == 'page'
           ? VideoMode.page
-          : VideoMode.stream;
+          : given == 'stream'
+          ? VideoMode.stream
+          : VideoMode.detect(url);
       targets.add(QoeTarget(name, url, mode: mode));
     }
     return (targets, errors);
@@ -123,10 +140,17 @@ class QoeSettings {
       ];
     }
 
+    // Format 1 (no 'version') had no explicit stream mode: re-detect.
+    final legacy = j['version'] == null;
     return QoeSettings(
       web: list('web', defaultWeb),
       apps: list('apps', defaultApps),
-      videos: list('videos', defaultVideos),
+      videos: [
+        for (final t in list('videos', defaultVideos))
+          legacy && t.mode == VideoMode.stream
+              ? QoeTarget(t.name, t.url, mode: VideoMode.detect(t.url))
+              : t,
+      ],
       fileSizeMib: (j['file_size_mib'] as num?)?.toInt() ?? 5,
       videoSeconds: (j['video_s'] as num?)?.toInt() ?? 30,
       pageTimeoutSeconds: (j['page_timeout_s'] as num?)?.toInt() ?? 30,
@@ -188,6 +212,7 @@ class QoeSettings {
   );
 
   Map<String, Object?> toJson() => {
+    'version': 2,
     'web': [for (final t in web) t.toJson()],
     'apps': [for (final t in apps) t.toJson()],
     'videos': [for (final t in videos) t.toJson()],

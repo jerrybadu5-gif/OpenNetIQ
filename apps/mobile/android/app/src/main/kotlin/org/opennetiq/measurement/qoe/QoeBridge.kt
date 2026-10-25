@@ -1,5 +1,6 @@
 package org.opennetiq.measurement.qoe
 
+import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -20,7 +21,10 @@ class QoeBridge(context: Context, messenger: BinaryMessenger) : MethodChannel.Me
     private val io = Executors.newSingleThreadExecutor()
     private val http = HttpProbe()
     private val web by lazy { WebPageProbe(appContext) }
-    private val video by lazy { VideoProbe(appContext) }
+    private val video by lazy { VideoProbe(appContext) { activity } }
+
+    /** Foreground activity (set by the Application), for on-screen video. */
+    @Volatile var activity: Activity? = null
 
     init {
         channel.setMethodCallHandler(this)
