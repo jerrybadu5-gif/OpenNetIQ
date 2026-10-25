@@ -210,35 +210,39 @@ class QoeTestController extends Notifier<QoeRunState> {
     final engine = ref.read(qoeEngineProvider);
     final tracker = ref.read(testContextProvider).trackServingLevel();
     final QoeResult result;
-    if (settings.fileProtocol == FileProtocol.ftp) {
-      if (!settings.ftpConfigured) {
-        result = failed(
-          'Set the FTP server, user and password in Experience tests options',
-        );
+    ({double? meanDbm, String? rat}) level;
+    try {
+      if (settings.fileProtocol == FileProtocol.ftp) {
+        if (!settings.ftpConfigured) {
+          result = failed(
+            'Set the FTP server, user and password in Experience tests options',
+          );
+        } else {
+          result = await engine.ftp(
+            url: settings.ftpUrl.trim(),
+            user: settings.ftpUser.trim(),
+            password: settings.ftpPassword,
+            sizeMib: upload
+                ? settings.ftpUploadMib
+                : settings.ftpSizeAuto
+                ? QoeSettings.ftpSizeFor(networkType)
+                : settings.ftpDownloadMib,
+            upload: upload,
+            maxDuration: Duration(seconds: settings.ftpMaxSeconds),
+          );
+        }
+      } else if (server == null) {
+        result = failed('Set the test server on the Speed test screen');
       } else {
-        result = await engine.ftp(
-          url: settings.ftpUrl.trim(),
-          user: settings.ftpUser.trim(),
-          password: settings.ftpPassword,
-          sizeMib: upload
-              ? settings.ftpUploadMib
-              : settings.ftpSizeAuto
-              ? QoeSettings.ftpSizeFor(networkType)
-              : settings.ftpDownloadMib,
+        result = await engine.file(
+          serverUrl: server,
+          sizeMib: settings.fileSizeMib,
           upload: upload,
-          maxDuration: Duration(seconds: settings.ftpMaxSeconds),
         );
       }
-    } else if (server == null) {
-      result = failed('Set the test server on the Speed test screen');
-    } else {
-      result = await engine.file(
-        serverUrl: server,
-        sizeMib: settings.fileSizeMib,
-        upload: upload,
-      );
+    } finally {
+      level = tracker.finish();
     }
-    final level = tracker.finish();
     return result.withLevel(level.meanDbm, level.rat);
   }
 
