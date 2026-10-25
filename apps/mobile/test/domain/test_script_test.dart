@@ -56,13 +56,17 @@ void main() {
         'Interval must be positive',
       ]),
     );
-    const future = TestScript(
+    const voice = TestScript(
       id: 'c',
       name: 'C',
-      steps: [ScriptStep(StepType.sms)],
+      steps: [ScriptStep(StepType.call), ScriptStep(StepType.sms)],
     );
-    expect(future.validate(), ['SMS is not available yet']);
+    expect(voice.validate(), isEmpty);
+    expect(StepType.values.every((t) => t.available), isTrue);
     expect(presetScripts.every((p) => p.validate().isEmpty), isTrue);
+    final nicta = presetScripts.firstWhere((p) => p.id == 'preset-nicta-voice');
+    expect(nicta.cycleIntervalSeconds, 170);
+    expect(nicta.unlimited, isTrue);
     expect(presetScripts.first.summary, 'Latency test → Speed test · once');
     const thrice = TestScript(
       id: 'd',

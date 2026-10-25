@@ -143,10 +143,16 @@ void main() {
       expect(list.where((s) => s.id == 's1').single.name, 'Renamed');
       expect(list, hasLength(presetScripts.length + 1));
       await store.delete('s1');
-      expect(await c.read(scriptStoreProvider.future), hasLength(2));
+      expect(
+        await c.read(scriptStoreProvider.future),
+        hasLength(presetScripts.length),
+      );
 
       final reread = container(settings: settings);
-      expect(await reread.read(scriptStoreProvider.future), hasLength(2));
+      expect(
+        await reread.read(scriptStoreProvider.future),
+        hasLength(presetScripts.length),
+      );
     });
 
     test('unreadable value falls back to presets', () async {

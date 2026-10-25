@@ -68,6 +68,7 @@ class DriftConsentStore implements ConsentRepository, MeasurementDataEraser {
     await _db.delete(_db.speedTests).go();
     await _db.delete(_db.latencyTests).go();
     await _db.delete(_db.qoeTests).go();
+    await _db.delete(_db.voiceSmsTests).go();
     await _db.delete(_db.sessions).go(); // cascades samples and cells
   });
 }

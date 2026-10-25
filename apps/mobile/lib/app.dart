@@ -18,6 +18,7 @@ import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_s
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
 import 'package:opennetiq_mobile/features/speed_test/presentation/speed_test_screen.dart';
+import 'package:opennetiq_mobile/features/voice_sms/presentation/voice_sms_screen.dart';
 
 final routerProvider = Provider<GoRouter>(
   (ref) => GoRouter(
@@ -37,6 +38,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'qoe',
             builder: (context, state) => const QoeTestScreen(),
+          ),
+          GoRoute(
+            path: 'voice-sms',
+            builder: (context, state) => const VoiceSmsScreen(),
           ),
           GoRoute(
             path: 'speed',

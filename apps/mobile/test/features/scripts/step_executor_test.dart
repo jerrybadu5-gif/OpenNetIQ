@@ -6,9 +6,12 @@ import 'package:opennetiq_mobile/features/qoe/application/qoe_controller.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
 import 'package:opennetiq_mobile/features/scripts/application/script_runner.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
+import 'package:opennetiq_mobile/domain/entities/voice_sms_test.dart';
+import 'package:opennetiq_mobile/features/voice_sms/application/voice_sms_controller.dart';
 
 import '../../fixtures/latency_fixtures.dart';
 import '../../fixtures/speed_fixtures.dart';
+import '../../fixtures/voice_sms_fixtures.dart';
 
 class ScriptedSpeed extends SpeedTestController {
   ScriptedSpeed(this.after);
@@ -54,6 +57,26 @@ class ScriptedQoe extends QoeTestController {
 
   @override
   Future<void> run(Set<QoeKind> kinds) async {
+    this.kinds.add(kinds);
+    state = after;
+  }
+
+  @override
+  Future<void> cancel() async => cancels++;
+}
+
+class ScriptedVoiceSms extends VoiceSmsController {
+  ScriptedVoiceSms(this.after);
+
+  final VoiceSmsRunState after;
+  final kinds = <Set<VoiceSmsKind>>[];
+  int cancels = 0;
+
+  @override
+  VoiceSmsRunState build() => const VoiceSmsRunState();
+
+  @override
+  Future<void> run(Set<VoiceSmsKind> kinds) async {
     this.kinds.add(kinds);
     state = after;
   }
@@ -116,22 +139,62 @@ void main() {
     expect(none.summary, 'No result');
   });
 
-  test('future step types report not available; cancel reaches all', () async {
-    final o = await run(const ScriptStep(StepType.call));
+  test('voice and SMS steps run the matching kind', () async {
+    for (final (type, kind) in [
+      (StepType.call, VoiceSmsKind.call),
+      (StepType.sms, VoiceSmsKind.sms),
+    ]) {
+      final vs = ScriptedVoiceSms(
+        VoiceSmsRunState(
+          results: [callOk(smallVoiceSmsSettings.callTargets.first)],
+        ),
+      );
+      final c = ProviderContainer(
+        overrides: [voiceSmsControllerProvider.overrideWith(() => vs)],
+      );
+      addTearDown(c.dispose);
+      final o = await c.read(stepExecutorProvider).run(ScriptStep(type));
+      expect(vs.kinds.single, {kind});
+      expect(o.ok, isTrue);
+      expect(
+        o.summary,
+        'Line A: completed · VoLTE · setup 4.2 s · connected 136 s',
+      );
+    }
+    final refused = ScriptedVoiceSms(
+      const VoiceSmsRunState(error: 'Allow voice and SMS tests in Privacy'),
+    );
+    final c = ProviderContainer(
+      overrides: [voiceSmsControllerProvider.overrideWith(() => refused)],
+    );
+    addTearDown(c.dispose);
+    final o = await c
+        .read(stepExecutorProvider)
+        .run(const ScriptStep(StepType.sms));
     expect(o.ok, isFalse);
-    expect(o.summary, 'Voice call is not available yet');
+    expect(o.summary, 'Allow voice and SMS tests in Privacy');
+    final wait = await c
+        .read(stepExecutorProvider)
+        .run(const ScriptStep(StepType.wait, seconds: 1));
+    expect(wait.ok, isTrue);
+  });
+
+  test('cancel reaches all controllers', () async {
     final speed = ScriptedSpeed(const SpeedTestState());
     final latency = ScriptedLatency(const LatencyTestState());
     final qoe = ScriptedQoe(const QoeRunState());
+    final vs = ScriptedVoiceSms(const VoiceSmsRunState());
     final c = ProviderContainer(
       overrides: [
         speedTestControllerProvider.overrideWith(() => speed),
         latencyTestControllerProvider.overrideWith(() => latency),
         qoeTestControllerProvider.overrideWith(() => qoe),
+        voiceSmsControllerProvider.overrideWith(() => vs),
       ],
     );
     addTearDown(c.dispose);
     await c.read(stepExecutorProvider).cancel();
+    expect(vs.cancels, 1);
     expect(qoe.cancels, 1);
     expect(speed.cancels, 1);
     expect(latency.cancels, 1);

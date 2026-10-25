@@ -114,30 +114,33 @@ void main() {
     });
   });
 
-  test('schema v1 databases upgrade to v2 with qoe_tests', () async {
-    final raw = NativeDatabase.memory(
-      setup: (db) {
-        final ddl = File('../../database/mobile/schema_v1.sql')
-            .readAsStringSync();
-        final noComments = ddl
-            .split('\n')
-            .map((l) => l.split('--').first)
-            .join('\n');
-        for (final stmt in noComments.split(';')) {
-          final sql = stmt.trim();
-          if (sql.isEmpty || sql.startsWith('PRAGMA journal_mode')) continue;
-          db.execute(sql);
-        }
-        db.execute('PRAGMA user_version = 1');
-      },
-    );
-    final db = AppDatabase(DatabaseConnection(raw));
-    addTearDown(db.close);
-    final tables = await db
-        .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
-        .get();
-    expect(tables.map((r) => r.read<String>('name')), contains('qoe_tests'));
-    final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 2);
-  });
+  test(
+    'schema v1 databases upgrade to the current version with qoe_tests',
+    () async {
+      final raw = NativeDatabase.memory(
+        setup: (db) {
+          final ddl = File('../../database/mobile/schema_v1.sql')
+              .readAsStringSync();
+          final noComments = ddl
+              .split('\n')
+              .map((l) => l.split('--').first)
+              .join('\n');
+          for (final stmt in noComments.split(';')) {
+            final sql = stmt.trim();
+            if (sql.isEmpty || sql.startsWith('PRAGMA journal_mode')) continue;
+            db.execute(sql);
+          }
+          db.execute('PRAGMA user_version = 1');
+        },
+      );
+      final db = AppDatabase(DatabaseConnection(raw));
+      addTearDown(db.close);
+      final tables = await db
+          .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+          .get();
+      expect(tables.map((r) => r.read<String>('name')), contains('qoe_tests'));
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), 3);
+    },
+  );
 }

@@ -55,6 +55,11 @@ class DriftExportStore {
                   ..where((t) => t.sessionId.equals(sessionId))
                   ..orderBy([(t) => OrderingTerm.asc(t.timestamp)]))
                 .get();
+        final voiceSms =
+            await (_db.select(_db.voiceSmsTests)
+                  ..where((t) => t.sessionId.equals(sessionId))
+                  ..orderBy([(t) => OrderingTerm.asc(t.timestamp)]))
+                .get();
         return SessionExportData(
           session: session,
           device: device,
@@ -63,6 +68,7 @@ class DriftExportStore {
           speedTests: speed,
           latencyTests: latency,
           qoeTests: qoe,
+          voiceSmsTests: voiceSms,
         );
       });
 }

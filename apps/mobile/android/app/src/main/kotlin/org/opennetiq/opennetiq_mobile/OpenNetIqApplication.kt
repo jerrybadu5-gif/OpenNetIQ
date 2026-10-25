@@ -8,6 +8,7 @@ import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import org.opennetiq.measurement.bridge.MeasurementBridge
 import org.opennetiq.measurement.qoe.QoeBridge
+import org.opennetiq.measurement.voice.VoiceSmsBridge
 
 /**
  * Owns the app's single FlutterEngine (ADR-014). The engine outlives
@@ -19,6 +20,8 @@ class OpenNetIqApplication : Application() {
         private set
     lateinit var qoe: QoeBridge
         private set
+    lateinit var voiceSms: VoiceSmsBridge
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -26,16 +29,22 @@ class OpenNetIqApplication : Application() {
         // Channel handlers are registered before Dart starts.
         bridge = MeasurementBridge(this, engine.dartExecutor.binaryMessenger)
         qoe = QoeBridge(this, engine.dartExecutor.binaryMessenger)
+        voiceSms = VoiceSmsBridge(this, engine.dartExecutor.binaryMessenger)
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityResumed(activity: Activity) { qoe.activity = activity }
+            override fun onActivityResumed(activity: Activity) {
+                qoe.activity = activity
+                voiceSms.activity = activity
+            }
             override fun onActivityPaused(activity: Activity) {
                 if (qoe.activity === activity) qoe.activity = null
+            }
+            override fun onActivityDestroyed(activity: Activity) {
+                if (voiceSms.activity === activity) voiceSms.activity = null
             }
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
             override fun onActivityStarted(activity: Activity) = Unit
             override fun onActivityStopped(activity: Activity) = Unit
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-            override fun onActivityDestroyed(activity: Activity) = Unit
         })
         engine.dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
         FlutterEngineCache.getInstance().put(ENGINE_ID, engine)

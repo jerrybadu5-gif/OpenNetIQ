@@ -11,15 +11,15 @@ enum StepType {
   video('video', 'Video streaming', available: true),
   apps('apps', 'App reachability', available: true),
   file('file', 'File transfer', available: true),
-  call('call', 'Voice call'),
-  sms('sms', 'SMS');
+  call('call', 'Voice call', available: true),
+  sms('sms', 'SMS', available: true);
 
   const StepType(this.wireValue, this.label, {this.available = false});
 
   final String wireValue;
   final String label;
 
-  /// Implemented in this build; call and SMS arrive with #30.
+  /// Implemented in this build.
   final bool available;
 
   static StepType? fromWire(String? value) {
@@ -152,5 +152,24 @@ const List<TestScript> presetScripts = [
     steps: [ScriptStep(StepType.speed), ScriptStep(StepType.latency)],
     cycles: 0,
     cycleIntervalSeconds: 120,
+  ),
+  // NICTA QoS Rule 2022 Schedule 1: 170 s call window (20 s setup, 120 s
+  // holding from the voice settings, 30 s interval).
+  TestScript(
+    id: 'preset-nicta-voice',
+    name: 'NICTA voice (Schedule 1)',
+    steps: [ScriptStep(StepType.call)],
+    cycles: 0,
+    cycleIntervalSeconds: 170,
+  ),
+  // Schedule 2: FTP-equivalent file transfer, ping, 5 web pages.
+  TestScript(
+    id: 'preset-nicta-data',
+    name: 'NICTA mobile broadband (Schedule 2)',
+    steps: [
+      ScriptStep(StepType.file),
+      ScriptStep(StepType.latency),
+      ScriptStep(StepType.web),
+    ],
   ),
 ];

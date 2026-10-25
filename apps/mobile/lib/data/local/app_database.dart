@@ -20,6 +20,7 @@ part 'app_database.g.dart';
     SpeedTests,
     LatencyTests,
     QoeTests,
+    VoiceSmsTests,
     AppSettings,
     ConsentLog,
   ],
@@ -33,13 +34,18 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'opennetiq.sqlite';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(qoeTests);
+      if (from < 3) {
+        await m.createTable(voiceSmsTests);
+        // Rebuilds consent_log for the new voice_sms scope CHECK.
+        await m.alterTable(TableMigration(consentLog));
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

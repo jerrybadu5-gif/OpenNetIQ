@@ -37,6 +37,19 @@ class ConsentController extends AsyncNotifier<ConsentStatus> {
     ref.invalidateSelf();
     await future;
   }
+
+  /// Grants or withdraws the voice call and SMS tests; logged either way.
+  Future<void> setVoiceSms({required bool granted}) async {
+    await ref
+        .read(consentRepositoryProvider)
+        .record(
+          {ConsentScope.voiceSms},
+          granted: granted,
+          policyVersion: privacyPolicyVersion,
+        );
+    ref.invalidateSelf();
+    await future;
+  }
 }
 
 final consentProvider = AsyncNotifierProvider<ConsentController, ConsentStatus>(
@@ -47,6 +60,11 @@ final consentProvider = AsyncNotifierProvider<ConsentController, ConsentStatus>(
 /// so nothing is collected before consent is known.
 final measurementConsentProvider = Provider<bool>(
   (ref) => ref.watch(consentProvider).value?.measurement ?? false,
+);
+
+/// Voice call and SMS tests allowed. False until the ledger is read.
+final voiceSmsConsentProvider = Provider<bool>(
+  (ref) => ref.watch(consentProvider).value?.voiceSms ?? false,
 );
 
 /// Ledger for the privacy screen, newest first.
