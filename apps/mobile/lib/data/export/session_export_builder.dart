@@ -13,6 +13,7 @@ class SessionExportData {
     this.device,
     this.speedTests = const [],
     this.latencyTests = const [],
+    this.qoeTests = const [],
   });
 
   final SessionRow session;
@@ -25,6 +26,7 @@ class SessionExportData {
   final Map<String, List<CellObservationRow>> cells;
   final List<SpeedTestRow> speedTests;
   final List<LatencyTestRow> latencyTests;
+  final List<QoeTestRow> qoeTests;
 
   bool get hasTests => speedTests.isNotEmpty || latencyTests.isNotEmpty;
 }
@@ -352,6 +354,79 @@ class SessionExportBuilder {
   /// Speed and latency tests of the session, in time order.
   String testsCsv() => csvDocument(testColumns, _testRows());
 
+  static const qoeColumns = [
+    'test_id',
+    'session_id',
+    'measurement_id',
+    'timestamp',
+    'methodology_version',
+    'kind',
+    'label',
+    'target',
+    'status',
+    'error',
+    'lat',
+    'lon',
+    'network_type',
+    'total_ms',
+    'dns_ms',
+    'connect_ms',
+    'tls_ms',
+    'ttfb_ms',
+    'dom_ms',
+    'http_status',
+    'start_delay_ms',
+    'rebuffer_count',
+    'rebuffer_ms',
+    'played_ms',
+    'bitrate_kbps',
+    'resolution',
+    'bytes',
+    'rate_mbps',
+    'direction',
+  ];
+
+  /// Customer-experience tests (issue #29), in time order.
+  String qoeCsv() {
+    final byId = _samplesById;
+    final rows = [...data.qoeTests]
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return csvDocument(qoeColumns, [
+      for (final t in rows)
+        [
+          t.testId,
+          t.sessionId,
+          t.measurementId,
+          t.timestamp,
+          t.methodologyVersion,
+          t.kind,
+          t.label,
+          t.target,
+          t.status,
+          t.error,
+          byId[t.measurementId]?.lat,
+          byId[t.measurementId]?.lon,
+          byId[t.measurementId]?.networkType,
+          t.totalMs,
+          t.dnsMs,
+          t.connectMs,
+          t.tlsMs,
+          t.ttfbMs,
+          t.domMs,
+          t.httpStatus,
+          t.startDelayMs,
+          t.rebufferCount,
+          t.rebufferMs,
+          t.playedMs,
+          t.bitrateKbps,
+          t.resolution,
+          t.bytes,
+          t.rateMbps,
+          t.direction,
+        ],
+    ]);
+  }
+
   /// RFC 7946 FeatureCollection (WGS 84, [lon, lat(, alt)]). Samples without
   /// a fix are left out; their count is in the track properties.
   String geoJson() {
@@ -441,6 +516,29 @@ class SessionExportBuilder {
           'median_ms': t.medianMs,
           'jitter_ms': t.jitterMs,
           'packet_loss_pct': t.packetLossPct,
+          'methodology_version': t.methodologyVersion,
+        },
+      });
+    }
+    for (final t in data.qoeTests) {
+      final at = byId[t.measurementId];
+      features.add({
+        'type': 'Feature',
+        'geometry': at?.lat == null || at?.lon == null
+            ? null
+            : {'type': 'Point', 'coordinates': coords(at!)},
+        'properties': {
+          'feature_type': 'qoe_test',
+          'test_id': t.testId,
+          'measurement_id': t.measurementId,
+          'timestamp': t.timestamp,
+          'kind': t.kind,
+          'label': t.label,
+          'status': t.status,
+          'total_ms': t.totalMs,
+          'start_delay_ms': t.startDelayMs,
+          'rebuffer_count': t.rebufferCount,
+          'rate_mbps': t.rateMbps,
           'methodology_version': t.methodologyVersion,
         },
       });

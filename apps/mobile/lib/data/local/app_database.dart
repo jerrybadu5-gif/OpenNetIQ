@@ -8,7 +8,8 @@ import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
-/// Local SQLite database (ADR-004), schema v1 = database/mobile/schema_v1.sql.
+/// Local SQLite database (ADR-004), schema v2 = database/mobile/schema_v2.sql
+/// (v1 + qoe_tests, issue #29).
 /// Generated code: `dart run build_runner build --delete-conflicting-outputs`.
 @DriftDatabase(
   tables: [
@@ -18,6 +19,7 @@ part 'app_database.g.dart';
     CellObservations,
     SpeedTests,
     LatencyTests,
+    QoeTests,
     AppSettings,
     ConsentLog,
   ],
@@ -31,11 +33,14 @@ class AppDatabase extends _$AppDatabase {
   static const String fileName = 'opennetiq.sqlite';
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.createTable(qoeTests);
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

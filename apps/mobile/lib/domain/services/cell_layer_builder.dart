@@ -139,6 +139,14 @@ abstract final class CellLayerBuilder {
 abstract final class SiteEstimator {
   static const double taStepM = 78.12;
   static const int maxTa = 1282;
+
+  /// Ranges beyond this are ignored (LTE cells rarely serve beyond 35 km;
+  /// larger values are usually reporting errors).
+  static const double maxRangeM = 35000;
+
+  /// A TA fit with more residual than this is not trusted (TA steps are
+  /// 78 m; real devices add some noise).
+  static const double maxRmsM = 400;
   static const double _earthR = 6371008.8;
 
   static EstimatedSite? estimate(String key, List<CellSighting> sightings) {
@@ -153,7 +161,7 @@ abstract final class SiteEstimator {
     var uncertainty = centroid.$2;
     var method = SiteMethod.levelCentroid;
     final ta = _timingAdvanceFit(used, origin, position);
-    if (ta != null) {
+    if (ta != null && _plausible(ta.$1, position, origin)) {
       position = ta.$1;
       uncertainty = ta.$2;
       method = SiteMethod.timingAdvance;
@@ -185,6 +193,14 @@ abstract final class SiteEstimator {
       mnc: ref.mnc,
       siteId: ref.rat == Rat.nr ? ref.gnbId : ref.enbId,
     );
+  }
+
+  /// Within 50 km of the samples and a valid WGS 84 position.
+  static bool _plausible(_Xy p, _Xy centroid, _Origin o) {
+    if (!p.x.isFinite || !p.y.isFinite) return false;
+    if (p.distSq(centroid) > 50000.0 * 50000.0) return false;
+    final (lat, lon) = o.toLatLon(p);
+    return lat.abs() <= 90 && lon.abs() <= 180;
   }
 
   static String _cellLabel(CellSighting s) => [
@@ -242,9 +258,11 @@ abstract final class SiteEstimator {
       final ta = s.timingAdvance;
       if (!s.isServing || s.rat != Rat.lte || ta == null) continue;
       if (ta < 0 || ta > maxTa) continue;
+      final range = (ta + 0.5) * taStepM;
+      if (range > maxRangeM) continue;
       final p = o.toXy(s);
       final cell = '${(p.x / 10).round()}:${(p.y / 10).round()}:$ta';
-      if (seen.add(cell)) ranged.add((p, (ta + 0.5) * taStepM));
+      if (seen.add(cell)) ranged.add((p, range));
     }
     if (ranged.length < 3) return null;
     var spread = 0.0;
@@ -274,6 +292,9 @@ abstract final class SiteEstimator {
       }
     }
     final rms = math.sqrt(best.$2 / ranged.length);
+    if (!rms.isFinite || rms > maxRmsM) return null;
+    final farthest = ranges.last + 1000;
+    if (best.$1.distSq(start) > farthest * farthest) return null;
     return (best.$1, math.max(80, 2 * rms + taStepM / 2));
   }
 
@@ -292,11 +313,19 @@ abstract final class SiteEstimator {
         b2 += jy * res;
       }
       final det = a11 * a22 - a12 * a12;
-      if (det.abs() < 1e-9) break;
-      final sx = (a22 * b1 - a12 * b2) / det;
-      final sy = (a11 * b2 - a12 * b1) / det;
+      final scale = (a11 + a22) * (a11 + a22);
+      if (det.abs() <= 1e-6 * scale || det.abs() < 1e-12) break; // collinear
+      var sx = (a22 * b1 - a12 * b2) / det;
+      var sy = (a11 * b2 - a12 * b1) / det;
+      final step = math.sqrt(sx * sx + sy * sy);
+      if (!step.isFinite) break;
+      if (step > 1000) {
+        // Damped: never jump more than 1 km per iteration.
+        sx *= 1000 / step;
+        sy *= 1000 / step;
+      }
       p = _Xy(p.x - sx, p.y - sy);
-      if (sx * sx + sy * sy < 0.01) break;
+      if (step < 0.1) break;
     }
     var cost = 0.0;
     for (final (x, r) in ranged) {

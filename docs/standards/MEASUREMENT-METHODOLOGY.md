@@ -79,10 +79,21 @@ Multiple flags are sorted and joined with `|`.
 - Targets: ICMP and TCP probe the speed-test server host (TCP on its URL port). Probes are sent on a fixed 200 ms schedule; a probe without answer within the timeout is lost.
 - ICMP uses the system `ping` (no root); replies are matched by sequence number, duplicates ignored.
 
+## 6b. Customer-experience tests (method `qoe-1.0`, issue #29)
+All probes start cold: no HTTP cache, no connection reuse, so DNS, TCP and TLS are measured as a first visit. Results are linked to the drive (or a stand-alone session) at the run start; each target is one `qoe_tests` row.
+- **Web browsing**: page loaded in an off-screen Android WebView with an empty cache; W3C Navigation Timing gives DNS, TCP connect (TLS excluded), TLS, time to first byte, DOMContentLoaded and load-event end (page load time). Timeout 30 s (failed). Values come from the browser engine (Chromium), as experienced by users.
+- **App reachability**: HTTPS GET of the app's endpoint (OkHttp, whole body read): DNS, TCP, TLS, first byte, total, HTTP status. HTTP ≥ 400 or no response = failed. Measures the network path to the service, not the app's own protocol.
+- **Video streaming**, 30 s by default:
+  - *Direct stream* (HLS/DASH/MP4): ExoPlayer with adaptive bitrate, no rendering surface. *Video on a web page* (YouTube, Facebook, game streams): first HTML5 `<video>` in a WebView shown on screen during the test (off-screen in the background), kept playing muted; progress polled every 500 ms (advancing = playing, no progress ≥ 1 s = rebuffer). Pre-roll ads count as playback.
+  - Start delay = test start → first playback; rebuffer = playback → buffering after the first start, until playback resumes (an open stall counts until the end); played time; time-weighted bitrate of the selected video format (direct streams); highest resolution seen.
+  - Status: no playback = failed; playback with a later error = partial.
+- **File transfer**: fixed size (default 5 MiB) download from `garbage.php` and upload to `empty.php` of the configured test server, one connection; rate = bytes × 8 / total time (Mbit/s, SI). Complements the multi-connection speed test with a single-transfer user experience.
+- Third-party sites see the phone's IP address; targets and video sources are configured by the operator of the test campaign.
+
 ## 6a. Cell scan and estimated sites (issue #27)
 - **Cell scan** aggregates stored `cell_observations` (serving and neighbour). Cell key: RAT + PLMN + cell ID; cells without identity (neighbours reporting only ARFCN + PCI) are keyed by RAT + ARFCN + PCI and take the identity of the single identified cell on the same channel when it is unambiguous. Mean level is the mean of dBm values.
 - **Site** = eNB ID (LTE) or gNB ID (NR); other RATs: the cell. Positions come from all sessions, so they improve with every drive. Mock-location and no-fix samples are excluded; GOOD fixes are used when there are at least 3.
-- **Timing-advance fit (preferred)**: LTE serving-cell TA index → range `(TA + 0.5) × 78.12 m` (3GPP TS 36.213: one step = 16 Ts). Least-squares (Gauss-Newton) fit of the site position to ≥ 3 distinct ranges spread over ≥ 150 m, started from 9 points; if a mirror solution > 200 m away fits about as well (straight road) the fit is rejected. Uncertainty = max(80 m, 2 × RMS residual + 39 m).
+- **Timing-advance fit (preferred)**: LTE serving-cell TA index → range `(TA + 0.5) × 78.12 m` (3GPP TS 36.213: one step = 16 Ts). Least-squares (Gauss-Newton) fit of the site position to ≥ 3 distinct ranges spread over ≥ 150 m, started from 9 points; if a mirror solution > 200 m away fits about as well (straight road) the fit is rejected. Uncertainty = max(80 m, 2 × RMS residual + 39 m). Safeguards: ranges > 35 km are ignored, the solver step is damped to 1 km per iteration and stops on near-collinear geometry, and a fit with RMS residual > 400 m, outside the farthest range + 1 km, or > 50 km from the samples is rejected (fallback below).
 - **Level centroid (fallback)**: level-weighted (linear power) centroid of the strongest quarter (≥ 3) of samples. It lies on the driven road, so uncertainty = max(200 m, 2 × weighted spread).
 - **Sector azimuth**: weighted circular mean of bearings from the site to the cell's strongest samples, reported only if the mean resultant length ≥ 0.5 and most of those samples lie outside half the uncertainty radius.
 - Estimated positions are labelled "estimated" everywhere (app, KML). They are not survey data and must not be used as such in regulatory findings.

@@ -11,6 +11,7 @@ import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
 import 'package:opennetiq_mobile/features/privacy/application/consent_controller.dart';
 import 'package:opennetiq_mobile/features/privacy/presentation/consent_screen.dart';
 import 'package:opennetiq_mobile/features/privacy/presentation/privacy_screen.dart';
+import 'package:opennetiq_mobile/features/qoe/presentation/qoe_test_screen.dart';
 import 'package:opennetiq_mobile/features/scripts/presentation/script_editor_screen.dart';
 import 'package:opennetiq_mobile/features/scripts/presentation/scripts_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
@@ -32,6 +33,10 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'latency',
             builder: (context, state) => const LatencyTestScreen(),
+          ),
+          GoRoute(
+            path: 'qoe',
+            builder: (context, state) => const QoeTestScreen(),
           ),
           GoRoute(
             path: 'speed',

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:opennetiq_mobile/domain/entities/qoe_test.dart';
 import 'package:opennetiq_mobile/domain/entities/test_script.dart';
+import 'package:opennetiq_mobile/features/qoe/application/qoe_controller.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
 import 'package:opennetiq_mobile/features/scripts/application/script_runner.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
@@ -35,6 +37,26 @@ class ScriptedLatency extends LatencyTestController {
 
   @override
   Future<void> start() async => state = after;
+
+  @override
+  Future<void> cancel() async => cancels++;
+}
+
+class ScriptedQoe extends QoeTestController {
+  ScriptedQoe(this.after);
+
+  final QoeRunState after;
+  final kinds = <Set<QoeKind>>[];
+  int cancels = 0;
+
+  @override
+  QoeRunState build() => const QoeRunState();
+
+  @override
+  Future<void> run(Set<QoeKind> kinds) async {
+    this.kinds.add(kinds);
+    state = after;
+  }
 
   @override
   Future<void> cancel() async => cancels++;
@@ -94,21 +116,65 @@ void main() {
     expect(none.summary, 'No result');
   });
 
-  test('future step types report not available; cancel reaches both', () async {
-    final o = await run(const ScriptStep(StepType.video));
+  test('future step types report not available; cancel reaches all', () async {
+    final o = await run(const ScriptStep(StepType.call));
     expect(o.ok, isFalse);
-    expect(o.summary, 'Video streaming is not available yet');
+    expect(o.summary, 'Voice call is not available yet');
     final speed = ScriptedSpeed(const SpeedTestState());
     final latency = ScriptedLatency(const LatencyTestState());
+    final qoe = ScriptedQoe(const QoeRunState());
     final c = ProviderContainer(
       overrides: [
         speedTestControllerProvider.overrideWith(() => speed),
         latencyTestControllerProvider.overrideWith(() => latency),
+        qoeTestControllerProvider.overrideWith(() => qoe),
       ],
     );
     addTearDown(c.dispose);
     await c.read(stepExecutorProvider).cancel();
+    expect(qoe.cancels, 1);
     expect(speed.cancels, 1);
     expect(latency.cancels, 1);
+  });
+
+  test('QoE steps run the matching kind and summarise', () async {
+    for (final (type, kind) in [
+      (StepType.web, QoeKind.web),
+      (StepType.video, QoeKind.video),
+      (StepType.apps, QoeKind.app),
+      (StepType.file, QoeKind.file),
+    ]) {
+      final qoe = ScriptedQoe(
+        const QoeRunState(
+          results: [
+            QoeResult(
+              kind: QoeKind.web,
+              label: 'Google',
+              target: 'https://g',
+              status: TestStatus.ok,
+              totalMs: 1800,
+            ),
+          ],
+        ),
+      );
+      final c = ProviderContainer(
+        overrides: [qoeTestControllerProvider.overrideWith(() => qoe)],
+      );
+      addTearDown(c.dispose);
+      final o = await c.read(stepExecutorProvider).run(ScriptStep(type));
+      expect(qoe.kinds.single, {kind});
+      expect(o.ok, isTrue);
+      expect(o.summary, 'Google: load 1.8 s');
+    }
+    final empty = ScriptedQoe(const QoeRunState(error: 'Nothing to test'));
+    final c = ProviderContainer(
+      overrides: [qoeTestControllerProvider.overrideWith(() => empty)],
+    );
+    addTearDown(c.dispose);
+    final o = await c
+        .read(stepExecutorProvider)
+        .run(const ScriptStep(StepType.web));
+    expect(o.ok, isFalse);
+    expect(o.summary, 'Nothing to test');
   });
 }

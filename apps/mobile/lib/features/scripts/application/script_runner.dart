@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opennetiq_mobile/core/clock.dart';
 import 'package:opennetiq_mobile/domain/entities/test_script.dart';
+import 'package:opennetiq_mobile/domain/entities/qoe_test.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
+import 'package:opennetiq_mobile/features/qoe/application/qoe_controller.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 
 class StepOutcome {
@@ -59,6 +61,28 @@ class ControllerStepExecutor implements StepExecutor {
             if (s.error != null) s.error!,
           ].join(' · '),
         );
+      case StepType.web || StepType.video || StepType.apps || StepType.file:
+        final kind = switch (step.type) {
+          StepType.web => QoeKind.web,
+          StepType.video => QoeKind.video,
+          StepType.apps => QoeKind.app,
+          _ => QoeKind.file,
+        };
+        await _ref.read(qoeTestControllerProvider.notifier).run({kind});
+        final s = _ref.read(qoeTestControllerProvider);
+        if (s.results.isEmpty) {
+          return StepOutcome(ok: false, summary: s.error ?? 'No result');
+        }
+        final failed = s.results
+            .where((r) => r.status == TestStatus.failed)
+            .length;
+        return StepOutcome(
+          ok: failed == 0 && s.error == null,
+          summary: [
+            for (final r in s.results) '${r.label}: ${r.summary}',
+            if (s.error != null) s.error!,
+          ].join(' · '),
+        );
       case final other:
         return StepOutcome(
           ok: false,
@@ -71,6 +95,7 @@ class ControllerStepExecutor implements StepExecutor {
   Future<void> cancel() async {
     await _ref.read(speedTestControllerProvider.notifier).cancel();
     await _ref.read(latencyTestControllerProvider.notifier).cancel();
+    await _ref.read(qoeTestControllerProvider.notifier).cancel();
   }
 }
 

@@ -22,5 +22,6 @@
 | [ADR-018](ADR-018-Consent-gate-and-ledger.md) | Consent gate before measurement; append-only consent ledger | Accepted |
 | [ADR-019](ADR-019-Estimated-cell-sites.md) | Cell sites estimated from drive data (timing advance, level centroid) | Accepted |
 | [ADR-020](ADR-020-Test-scripts.md) | Test scripts as JSON, executed through the existing test controllers | Accepted |
+| [ADR-021](ADR-021-Customer-experience-tests.md) | Customer-experience tests on WebView, ExoPlayer and OkHttp; schema v2 | Accepted |
 
 New ADRs: copy `ADR-000-template.md`, next free number, PR with label `documentation`.

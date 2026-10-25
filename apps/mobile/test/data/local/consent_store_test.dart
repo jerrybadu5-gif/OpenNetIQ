@@ -72,6 +72,7 @@ void main() {
     expect(await db.select(db.cellObservations).get(), isEmpty);
     expect(await db.select(db.speedTests).get(), isEmpty);
     expect(await db.select(db.latencyTests).get(), isEmpty);
+    expect(await db.select(db.qoeTests).get(), isEmpty);
     expect(await db.select(db.consentLog).get(), hasLength(2));
     expect(await db.select(db.devices).get(), hasLength(1));
   });

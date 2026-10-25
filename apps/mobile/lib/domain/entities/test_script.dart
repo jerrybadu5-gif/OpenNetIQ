@@ -7,10 +7,10 @@ enum StepType {
   speed('speed', 'Speed test', available: true),
   latency('latency', 'Latency test', available: true),
   wait('wait', 'Wait', available: true),
-  web('web', 'Web browsing'),
-  video('video', 'Video streaming'),
-  apps('apps', 'App reachability'),
-  file('file', 'File transfer'),
+  web('web', 'Web browsing', available: true),
+  video('video', 'Video streaming', available: true),
+  apps('apps', 'App reachability', available: true),
+  file('file', 'File transfer', available: true),
   call('call', 'Voice call'),
   sms('sms', 'SMS');
 
@@ -19,7 +19,7 @@ enum StepType {
   final String wireValue;
   final String label;
 
-  /// Implemented in this build; others arrive with #29/#30.
+  /// Implemented in this build; call and SMS arrive with #30.
   final bool available;
 
   static StepType? fromWire(String? value) {

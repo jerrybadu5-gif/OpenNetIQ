@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opennetiq_mobile/features/latency_test/application/latency_test_controller.dart';
+import 'package:opennetiq_mobile/features/qoe/application/qoe_controller.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_pipeline.dart';
 import 'package:opennetiq_mobile/features/speed_test/application/speed_test_controller.dart';
 
@@ -9,5 +10,6 @@ void startAppRuntime(ProviderContainer container) {
   startRecordingRuntime(container);
   container
     ..listen<void>(speedTestPipelineProvider, (previous, next) {})
-    ..listen<void>(latencyTestPipelineProvider, (previous, next) {});
+    ..listen<void>(latencyTestPipelineProvider, (previous, next) {})
+    ..listen<void>(qoeTestPipelineProvider, (previous, next) {});
 }

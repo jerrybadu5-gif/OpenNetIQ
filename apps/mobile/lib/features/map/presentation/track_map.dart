@@ -139,7 +139,16 @@ class _TrackMapState extends ConsumerState<TrackMap> {
   Widget build(BuildContext context) {
     final config = ref.watch(mapTileConfigProvider);
     final layer = widget.layer;
-    final sites = layer?.sites ?? const <EstimatedSite>[];
+    // Defensive: never let an invalid position reach the map camera.
+    final sites = [
+      for (final s in layer?.sites ?? const <EstimatedSite>[])
+        if (s.lat.isFinite &&
+            s.lon.isFinite &&
+            s.lat.abs() <= 90 &&
+            s.lon.abs() <= 180 &&
+            s.uncertaintyM.isFinite)
+          s,
+    ];
     final selected = _selected;
     final selectedSite = selected == null ? null : _servingSite(selected);
     final scheme = Theme.of(context).colorScheme;

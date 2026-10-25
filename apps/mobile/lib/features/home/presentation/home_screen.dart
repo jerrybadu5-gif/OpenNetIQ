@@ -35,6 +35,15 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.signal),
           ),
           ListTile(
+            leading: const Icon(Icons.ondemand_video),
+            title: const Text('Experience tests'),
+            subtitle: const Text(
+              'Web pages, video streaming, popular apps, file transfer',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.qoe),
+          ),
+          ListTile(
             leading: const Icon(Icons.playlist_play),
             title: const Text('Test scripts'),
             subtitle: const Text(

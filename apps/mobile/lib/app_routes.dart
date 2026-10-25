@@ -6,6 +6,7 @@ abstract final class AppRoutes {
   static const String drive = '/drive';
   static const String speed = '/speed';
   static const String latency = '/latency';
+  static const String qoe = '/qoe';
   static const String privacy = '/privacy';
   static const String cells = '/cells';
   static const String scripts = '/scripts';

@@ -67,6 +67,7 @@ class DriftConsentStore implements ConsentRepository, MeasurementDataEraser {
     // Tests first: unlinked tests have no session to cascade from.
     await _db.delete(_db.speedTests).go();
     await _db.delete(_db.latencyTests).go();
+    await _db.delete(_db.qoeTests).go();
     await _db.delete(_db.sessions).go(); // cascades samples and cells
   });
 }

@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-// Drift tables for local schema v1. Must match database/mobile/schema_v1.sql
+// Drift tables for local schema v2. Must match database/mobile/schema_v2.sql
 // and docs/standards/DATA-DICTIONARY.md (verified by test/data/local/
 // schema_test.dart). Ids are UUIDv7 text, times are UTC ISO 8601 text.
 
@@ -209,6 +209,52 @@ class LatencyTests extends Table {
   late final Column<String> status = text().check(
     status.isIn(const ['ok', 'partial', 'failed']),
   )();
+  late final createdAt = text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {testId};
+}
+
+/// Customer-experience tests (schema v2, issue #29, method `qoe-1.0`).
+@DataClassName('QoeTestRow')
+class QoeTests extends Table {
+  late final testId = text()();
+  late final sessionId = text().nullable().references(
+    Sessions,
+    #sessionId,
+    onDelete: KeyAction.cascade,
+  )();
+  late final measurementId = text().nullable().references(
+    Samples,
+    #measurementId,
+  )();
+  late final timestamp = text()();
+  late final Column<String> kind = text().check(
+    kind.isIn(const ['web', 'video', 'app', 'file']),
+  )();
+  late final methodologyVersion = text()();
+  late final label = text()();
+  late final target = text()();
+  late final Column<String> status = text().check(
+    status.isIn(const ['ok', 'partial', 'failed']),
+  )();
+  late final error = text().nullable()();
+  late final totalMs = real().nullable()();
+  late final dnsMs = real().nullable()();
+  late final connectMs = real().nullable()();
+  late final tlsMs = real().nullable()();
+  late final ttfbMs = real().nullable()();
+  late final domMs = real().nullable()();
+  late final httpStatus = integer().nullable()();
+  late final startDelayMs = real().nullable()();
+  late final rebufferCount = integer().nullable()();
+  late final rebufferMs = real().nullable()();
+  late final playedMs = real().nullable()();
+  late final bitrateKbps = real().nullable()();
+  late final resolution = text().nullable()();
+  late final bytes = integer().nullable()();
+  late final rateMbps = real().nullable()();
+  late final direction = text().nullable()();
   late final createdAt = text()();
 
   @override

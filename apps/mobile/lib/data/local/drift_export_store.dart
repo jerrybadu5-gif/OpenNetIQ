@@ -50,6 +50,11 @@ class DriftExportStore {
                   ..where((t) => t.sessionId.equals(sessionId))
                   ..orderBy([(t) => OrderingTerm.asc(t.timestamp)]))
                 .get();
+        final qoe =
+            await (_db.select(_db.qoeTests)
+                  ..where((t) => t.sessionId.equals(sessionId))
+                  ..orderBy([(t) => OrderingTerm.asc(t.timestamp)]))
+                .get();
         return SessionExportData(
           session: session,
           device: device,
@@ -57,6 +62,7 @@ class DriftExportStore {
           cells: cells,
           speedTests: speed,
           latencyTests: latency,
+          qoeTests: qoe,
         );
       });
 }
