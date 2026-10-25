@@ -20,5 +20,6 @@
 | [ADR-016](ADR-016-Speed-test-server-on-nginx.md) | Speed-test server on nginx; ndt7 fallback needs consent (amends ADR-007) | Accepted |
 | [ADR-017](ADR-017-Share-sheet-export.md) | Session exports shared through the Android share sheet (share_plus) | Accepted |
 | [ADR-018](ADR-018-Consent-gate-and-ledger.md) | Consent gate before measurement; append-only consent ledger | Accepted |
+| [ADR-019](ADR-019-Estimated-cell-sites.md) | Cell sites estimated from drive data (timing advance, level centroid) | Accepted |
 
 New ADRs: copy `ADR-000-template.md`, next free number, PR with label `documentation`.

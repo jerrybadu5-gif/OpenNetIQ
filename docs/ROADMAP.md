@@ -132,6 +132,15 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 - **Field validation:** 3 drive routes in Port Moresby (urban, suburban, highway) against a reference (second device running a reference app such as Network Cell Info / G-NetTrack, or a commercial tool where available).
 - Status: protocol, results template and `onq-validate` checks for every measurable exit criterion implemented in issue #25 (`docs/features/field-validation/`, `tests/field-validation/`). Field drives pending.
 
+#### 1.11–1.16 v0.1.0 extension (decided 2026-10-21, spec `docs/specs/v0.1.0-extension.md`)
+v0.1.0 ships as one release including G-NetTrack Pro parity; field validation runs once at the end.
+- 1.11 (#27) Cell scan, estimated site layer (timing advance / level centroid, ADR-019), serving lines, KML export — Status: implemented in issue #27 (`docs/features/cell-scan/`).
+- 1.12 (#28) Test scripts: scheduled step sequences during drives.
+- 1.13 (#29) Customer-experience tests: web browsing, video (direct streams and video on web pages), app reachability, file transfer.
+- 1.14 (#30) Voice and SMS sequences (call KPIs only; no MOS).
+- 1.15 (#31) Multi-phone benchmarking: shared script, synchronised start, `onq-validate benchmark` merge.
+- 1.16 (#32) Spectrum analyser: "Coming soon" placeholder (tinySA Ultra support after hardware is available).
+
 **Exit criteria (M1 release `v0.1.0`)**
 - [ ] RSRP/RSRQ agree with reference within **±2 dB** median absolute difference on the same device model
 - [ ] DL/UL throughput within **±10 %** of reference test on the same server, same location (n ≥ 30)

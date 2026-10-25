@@ -298,6 +298,7 @@ class DriftMeasurementStore implements SessionRepository, SampleRepository {
       gpsQuality: GpsQuality.fromWire(row.readNullable<String>('gps_quality')),
       rat: primary?.$1,
       levelDbm: primary?.$2,
+      measurementId: row.read<String>('measurement_id'),
     );
   }
 

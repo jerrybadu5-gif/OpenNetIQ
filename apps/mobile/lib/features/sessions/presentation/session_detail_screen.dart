@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:opennetiq_mobile/app_routes.dart';
 import 'package:opennetiq_mobile/core/utc_time.dart';
 import 'package:opennetiq_mobile/domain/entities/rat.dart';
 import 'package:opennetiq_mobile/domain/services/session_stats.dart';
 import 'package:opennetiq_mobile/domain/value_objects/signal_quality.dart';
+import 'package:opennetiq_mobile/domain/entities/cell_scan.dart';
+import 'package:opennetiq_mobile/features/cells/application/cell_layer_providers.dart';
 import 'package:opennetiq_mobile/features/map/presentation/track_map.dart';
 import 'package:opennetiq_mobile/features/recording/application/storage_providers.dart';
 import 'package:opennetiq_mobile/features/export/presentation/export_sheet.dart';
@@ -62,7 +65,10 @@ class SessionDetailScreen extends ConsumerWidget {
         ],
       ),
       body: switch (detail) {
-        AsyncData(value: final d?) => _DetailView(detail: d),
+        AsyncData(value: final d?) => _DetailView(
+          detail: d,
+          layer: ref.watch(cellLayerProvider(sessionId)).value,
+        ),
         AsyncData() => const Center(child: Text('Session not found.')),
         AsyncError(:final error) => Center(
           child: Text('Could not load session: $error'),
@@ -100,9 +106,12 @@ class SessionDetailScreen extends ConsumerWidget {
 }
 
 class _DetailView extends StatelessWidget {
-  const _DetailView({required this.detail});
+  const _DetailView({required this.detail, this.layer});
 
   final SessionDetail detail;
+
+  /// Cells and estimated sites (#27); null while loading.
+  final CellLayer? layer;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +132,7 @@ class _DetailView extends StatelessWidget {
               subtitle: Text('Statistics show the samples stored so far.'),
             ),
           ),
-        TrackMap(points: detail.points),
+        TrackMap(points: detail.points, layer: layer),
         const TrackLegend(),
         _Section(
           title: 'Summary',
@@ -172,6 +181,20 @@ class _DetailView extends StatelessWidget {
           note: 'min / median / max (samples)',
         ),
         _DistributionCard(stats: stats),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.cell_tower),
+            title: const Text('Cell scan'),
+            subtitle: Text(
+              layer == null
+                  ? 'Loading cells...'
+                  : '${layer!.cells.length} cells · '
+                        '${layer!.sites.length} estimated sites',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.sessionCells(s.id)),
+          ),
+        ),
         _Section(
           title: 'Network type',
           rows: [

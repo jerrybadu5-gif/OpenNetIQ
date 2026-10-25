@@ -59,9 +59,22 @@ class ExportSheet extends StatelessWidget {
               onTap: () => pick({ExportFormat.geojson}),
             ),
             ListTile(
+              leading: const Icon(Icons.public),
+              title: const Text('KML'),
+              subtitle: const Text(
+                'Google Earth: coloured track, samples, estimated sites',
+              ),
+              onTap: () => pick({ExportFormat.kml}),
+            ),
+            ListTile(
               leading: const Icon(Icons.folder_copy_outlined),
-              title: const Text('CSV + GeoJSON'),
-              onTap: () => pick({ExportFormat.csv, ExportFormat.geojson}),
+              title: const Text('All formats'),
+              subtitle: const Text('CSV, GeoJSON and KML'),
+              onTap: () => pick({
+                ExportFormat.csv,
+                ExportFormat.geojson,
+                ExportFormat.kml,
+              }),
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 0, 16, 16),

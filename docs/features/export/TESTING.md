@@ -12,7 +12,7 @@
 
 ## On device
 1. Record a short drive (with one speed test during it), stop.
-2. Sessions → the session → share icon → **CSV + GeoJSON** → save to Files
+2. Sessions → the session → share icon → **All formats** → save to Files
    or Drive.
 3. Open the CSV in Excel: one row per second, empty cells (not 0) where
    values are unavailable.

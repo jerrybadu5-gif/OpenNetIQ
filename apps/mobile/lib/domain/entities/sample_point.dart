@@ -15,6 +15,7 @@ class SamplePoint {
     this.gpsQuality,
     this.rat,
     this.levelDbm,
+    this.measurementId,
   });
 
   final DateTime timestamp;
@@ -31,6 +32,9 @@ class SamplePoint {
 
   /// RSRP (LTE/NR), RSCP (WCDMA) or RSSI (GSM) of that cell.
   final double? levelDbm;
+
+  /// Stored sample id (null for live points not yet stored).
+  final String? measurementId;
 
   bool get hasPosition => lat != null && lon != null && !mockLocation;
 

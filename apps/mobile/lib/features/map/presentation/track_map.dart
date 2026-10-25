@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:opennetiq_mobile/domain/entities/cell_scan.dart';
 import 'package:opennetiq_mobile/domain/entities/sample_point.dart';
 import 'package:opennetiq_mobile/domain/services/track_segments.dart';
 import 'package:opennetiq_mobile/domain/value_objects/signal_quality.dart';
@@ -21,10 +22,14 @@ class TrackMap extends ConsumerStatefulWidget {
     required this.points,
     this.follow = false,
     this.height = 280,
+    this.layer,
     super.key,
   });
 
   final List<SamplePoint> points;
+
+  /// Estimated sites and the serving site of each sample (issue #27).
+  final CellLayer? layer;
   final bool follow;
   final double height;
 
@@ -38,6 +43,8 @@ class TrackMap extends ConsumerStatefulWidget {
 class _TrackMapState extends ConsumerState<TrackMap> {
   final MapController _controller = MapController();
   bool _ready = false;
+  bool _servingLines = false;
+  SamplePoint? _selected;
   List<SamplePoint>? _cachedFor;
   List<TrackSegment> _segments = const [];
 
@@ -73,14 +80,75 @@ class _TrackMapState extends ConsumerState<TrackMap> {
     super.dispose();
   }
 
+  /// Sample closest to [at] within 60 m, to show its serving-cell line.
+  void _select(LatLng at) {
+    if (widget.layer == null) return;
+    const distance = Distance();
+    SamplePoint? best;
+    var bestM = 60.0;
+    for (final p in widget.points) {
+      if (!p.hasPosition) continue;
+      final m = distance.as(LengthUnit.Meter, at, _latLng(p));
+      if (m < bestM) {
+        bestM = m;
+        best = p;
+      }
+    }
+    setState(() => _selected = best);
+  }
+
+  EstimatedSite? _servingSite(SamplePoint p) {
+    final layer = widget.layer;
+    final id = p.measurementId;
+    if (layer == null || id == null) return null;
+    final key = layer.servingSiteByMeasurement[id];
+    return key == null ? null : layer.site(key);
+  }
+
+  static LatLng _sitePoint(EstimatedSite s) => LatLng(s.lat, s.lon);
+
+  /// Short line from the site towards the sector's estimated azimuth.
+  static List<LatLng> _sectorLine(EstimatedSite s, double azimuthDeg) {
+    final length = s.uncertaintyM.clamp(150, 400).toDouble();
+    final end = const Distance().offset(_sitePoint(s), length, azimuthDeg);
+    return [_sitePoint(s), end];
+  }
+
+  List<Polyline<Object>> _servingPolylines(Color color) {
+    final lines = <Polyline<Object>>[];
+    final positioned = [
+      for (final p in widget.points)
+        if (p.hasPosition) p,
+    ];
+    final step = (positioned.length / 300).ceil().clamp(1, 1 << 20);
+    for (var i = 0; i < positioned.length; i += step) {
+      final site = _servingSite(positioned[i]);
+      if (site == null) continue;
+      lines.add(
+        Polyline<Object>(
+          points: [_latLng(positioned[i]), _sitePoint(site)],
+          color: color.withValues(alpha: 0.35),
+          strokeWidth: 1,
+        ),
+      );
+    }
+    return lines;
+  }
+
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(mapTileConfigProvider);
+    final layer = widget.layer;
+    final sites = layer?.sites ?? const <EstimatedSite>[];
+    final selected = _selected;
+    final selectedSite = selected == null ? null : _servingSite(selected);
+    final scheme = Theme.of(context).colorScheme;
     final segments = _segmentsFor(widget.points);
     final last = _last;
     final positioned = [
       for (final p in widget.points)
         if (p.hasPosition) _latLng(p),
+      for (final s in sites) _sitePoint(s),
     ];
     return SizedBox(
       height: widget.height,
@@ -106,6 +174,7 @@ class _TrackMapState extends ConsumerState<TrackMap> {
                   flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                 ),
                 onMapReady: () => _ready = true,
+                onTap: (_, at) => _select(at),
               ),
               children: [
                 if (config.enabled)
@@ -124,6 +193,59 @@ class _TrackMapState extends ConsumerState<TrackMap> {
                         ),
                   ],
                 ),
+                if (sites.isNotEmpty) ...[
+                  CircleLayer<Object>(
+                    circles: [
+                      for (final s in sites)
+                        CircleMarker<Object>(
+                          point: _sitePoint(s),
+                          radius: s.uncertaintyM,
+                          useRadiusInMeter: true,
+                          color: scheme.primary.withValues(alpha: 0.06),
+                          borderColor: scheme.primary.withValues(alpha: 0.4),
+                          borderStrokeWidth: 1,
+                        ),
+                    ],
+                  ),
+                  PolylineLayer<Object>(
+                    polylines: [
+                      if (_servingLines) ..._servingPolylines(scheme.primary),
+                      for (final s in sites)
+                        for (final c in s.cells)
+                          if (c.azimuthDeg case final az?)
+                            Polyline<Object>(
+                              points: _sectorLine(s, az),
+                              color: scheme.primary,
+                              strokeWidth: 3,
+                            ),
+                      if (selected != null && selectedSite != null)
+                        Polyline<Object>(
+                          points: [_latLng(selected), _sitePoint(selectedSite)],
+                          color: scheme.tertiary,
+                          strokeWidth: 3,
+                        ),
+                    ],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      for (final s in sites)
+                        Marker(
+                          point: _sitePoint(s),
+                          width: 28,
+                          height: 28,
+                          child: Tooltip(
+                            message:
+                                '${s.label} (estimated, ±${s.uncertaintyM.round()} m)',
+                            child: Icon(
+                              Icons.cell_tower,
+                              color: scheme.primary,
+                              semanticLabel: s.label,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 if (last != null)
                   CircleLayer<Object>(
                     circles: [
@@ -140,7 +262,46 @@ class _TrackMapState extends ConsumerState<TrackMap> {
                   SimpleAttributionWidget(source: Text(config.attribution)),
               ],
             ),
-            if (last == null)
+            if (sites.isNotEmpty)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: FilterChip(
+                  label: const Text('Serving lines'),
+                  selected: _servingLines,
+                  onSelected: (on) => setState(() => _servingLines = on),
+                ),
+              ),
+            if (selected != null)
+              Positioned(
+                left: 8,
+                right: 8,
+                bottom: 24,
+                child: Card(
+                  child: ListTile(
+                    dense: true,
+                    title: Text(
+                      selectedSite == null
+                          ? 'Serving cell not located'
+                          : 'Serving: ${selectedSite.label}',
+                    ),
+                    subtitle: Text(
+                      [
+                        if (selected.levelDbm case final l?)
+                          '${l.toStringAsFixed(0)} dBm',
+                        if (selectedSite != null)
+                          '${const Distance().as(LengthUnit.Meter, _latLng(selected), _sitePoint(selectedSite)).round()} m to estimated site',
+                      ].join(' · '),
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'Clear',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() => _selected = null),
+                    ),
+                  ),
+                ),
+              ),
+            if (last == null && sites.isEmpty)
               const Center(
                 child: Card(
                   child: Padding(
