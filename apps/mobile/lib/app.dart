@@ -11,6 +11,8 @@ import 'package:opennetiq_mobile/features/home/presentation/home_screen.dart';
 import 'package:opennetiq_mobile/features/privacy/application/consent_controller.dart';
 import 'package:opennetiq_mobile/features/privacy/presentation/consent_screen.dart';
 import 'package:opennetiq_mobile/features/privacy/presentation/privacy_screen.dart';
+import 'package:opennetiq_mobile/features/scripts/presentation/script_editor_screen.dart';
+import 'package:opennetiq_mobile/features/scripts/presentation/scripts_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/session_detail_screen.dart';
 import 'package:opennetiq_mobile/features/sessions/presentation/sessions_screen.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/presentation/signal_monitor_screen.dart';
@@ -34,6 +36,18 @@ final routerProvider = Provider<GoRouter>(
           GoRoute(
             path: 'speed',
             builder: (context, state) => const SpeedTestScreen(),
+          ),
+          GoRoute(
+            path: 'scripts',
+            builder: (context, state) => const ScriptsScreen(),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) => ScriptEditorScreen(
+                  scriptId: state.uri.queryParameters['id'],
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: 'cells',

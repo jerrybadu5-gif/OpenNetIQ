@@ -8,6 +8,10 @@ abstract final class AppRoutes {
   static const String latency = '/latency';
   static const String privacy = '/privacy';
   static const String cells = '/cells';
+  static const String scripts = '/scripts';
+
+  static String scriptEditor([String? id]) =>
+      id == null ? '/scripts/edit' : '/scripts/edit?id=$id';
 
   static String sessionDetail(String id) => '/sessions/$id';
   static String sessionCells(String id) => '/sessions/$id/cells';
