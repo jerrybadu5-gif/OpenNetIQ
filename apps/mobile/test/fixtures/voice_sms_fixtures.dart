@@ -4,12 +4,17 @@ import 'package:opennetiq_mobile/domain/entities/voice_sms_test.dart';
 import 'package:opennetiq_mobile/domain/repositories/voice_sms_repository.dart';
 
 const smallVoiceSmsSettings = VoiceSmsSettings(
-  callTargets: [PhoneTarget('Line A', '+67571234567')],
+  callTargets: [
+    PhoneTarget('Line A', '+67571234567'),
+    PhoneTarget('PSTN', '3211234'),
+  ],
   smsTargets: [
     PhoneTarget('Me', '+67570000011', loopback: true),
     PhoneTarget('Line B', '+67571112222'),
   ],
-  callWindowSeconds: 30,
+  setupTimeoutSeconds: 20,
+  holdSeconds: 120,
+  intervalSeconds: 30,
   smsTimeoutSeconds: 20,
 );
 
@@ -19,11 +24,12 @@ VoiceSmsResult callOk(PhoneTarget t) => VoiceSmsResult(
   targetMasked: t.masked,
   status: TestStatus.ok,
   outcome: 'completed',
-  windowS: 30,
-  callMs: 30200,
+  windowS: 140,
+  callMs: 140200,
   setupMs: 4200,
-  connectedS: 26,
+  connectedS: 136,
   dropped: false,
+  voiceRat: 'VoLTE',
 );
 
 VoiceSmsResult smsOk(PhoneTarget t) => VoiceSmsResult(
@@ -62,8 +68,12 @@ class FakeVoiceSmsEngine implements VoiceSmsEngine {
   }
 
   @override
-  Future<VoiceSmsResult> call(PhoneTarget t, {required Duration window}) async {
-    calls.add('call:${t.name}:${window.inSeconds}');
+  Future<VoiceSmsResult> call(
+    PhoneTarget t, {
+    required Duration setupTimeout,
+    required Duration hold,
+  }) async {
+    calls.add('call:${t.name}:${setupTimeout.inSeconds}+${hold.inSeconds}');
     await gate?.future;
     return callOk(t);
   }

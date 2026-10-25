@@ -92,8 +92,7 @@ void main() {
     await tester.tap(find.text('Start tests'));
     await tester.pump();
     expect(stub.runs.single, {VoiceSmsKind.call});
-    expect(find.text('1 numbers'), findsOneWidget);
-    expect(find.text('2 numbers'), findsOneWidget);
+    expect(find.text('2 numbers'), findsNWidgets(2));
     await tester.tap(find.text('SMS').last);
     await tester.pumpAndSettle();
     expect(find.text('+67570000011 · this phone'), findsOneWidget);
@@ -131,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Setup time'), findsOneWidget);
     expect(find.text('4200 ms'), findsOneWidget);
-    expect(find.text('26 s'), findsOneWidget);
+    expect(find.text('136 s'), findsOneWidget);
   });
 
   testWidgets('edits numbers with validation and saves options', (
@@ -163,12 +162,14 @@ void main() {
     expect(settings.values[voiceSmsSettingsKey], contains('70001234'));
     await tester.tap(find.text('Options'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, '90');
+    expect(find.textContaining('NICTA QoS Rule 2022'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).at(1), '90');
+    await tester.enterText(find.byType(TextField).at(2), '9999');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(
-      settings.values[voiceSmsSettingsKey],
-      contains('"call_window_s":90'),
-    );
+    final saved = settings.values[voiceSmsSettingsKey]!;
+    expect(saved, contains('"interval_s":600')); // clamped
+    expect(saved, contains('"setup_timeout_s":20'));
+    expect(settings.values[voiceSmsSettingsKey], contains('"hold_s":90'));
   });
 }

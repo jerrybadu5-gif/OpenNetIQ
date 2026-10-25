@@ -137,7 +137,8 @@ v0.1.0 ships as one release including G-NetTrack Pro parity; field validation ru
 - 1.11 (#27) Cell scan, estimated site layer (timing advance / level centroid, ADR-019), serving lines, KML export — Status: implemented in issue #27 (`docs/features/cell-scan/`).
 - 1.12 (#28) Test scripts: scheduled step sequences during drives — Status: implemented in issue #28 (`docs/features/test-scripts/`, ADR-020); web/video/apps/file steps added in #29, call/SMS steps in #30.
 - 1.13 (#29) Customer-experience tests: web browsing, video (direct streams and video on web pages), app reachability, file transfer — Status: implemented in issue #29 (`docs/features/qoe-tests/`, ADR-021, schema v2).
-- 1.14 (#30) Voice and SMS sequences (call KPIs only; no MOS) — Status: implemented in issue #30 (`docs/features/voice-sms/`, ADR-022, schema v3, privacy policy 1.1 with `voice_sms` consent; call/SMS script steps).
+- 1.14 (#30) Voice and SMS sequences (call KPIs only; no MOS) — Status: implemented in issue #30 (`docs/features/voice-sms/`, ADR-022, schema v3, privacy policy 1.1 with `voice_sms` consent; call/SMS script steps; call timing per NICTA QoS Rule 2022 Schedule 1: 20 s setup, 120 s hold, 30 s interval, voice technology per call).
+- Compliance reference: NICTA Telecommunications QoS Rule 2022, traced in `docs/standards/NICTA-QOS-RULE-2022.md` (met / partial / gap per parameter). Open decisions: FTP throughput test, session region/area tagging, Appendix A/B compliance report, configurable ping count.
 - 1.15 (#31) Multi-phone benchmarking: shared script, synchronised start, `onq-validate benchmark` merge.
 - 1.16 (#32) Spectrum analyser: "Coming soon" placeholder (tinySA Ultra support after hardware is available).
 

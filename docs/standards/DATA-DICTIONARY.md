@@ -177,13 +177,14 @@ Values reported as `UNAVAILABLE` (`Integer.MAX_VALUE`) or out of range are store
 | label | TEXT | no | Test-line name |
 | target_masked | TEXT | no | Last two digits of the number, e.g. `••67` (never the full number) |
 | status | TEXT | no | `ok`, `partial`, `failed` |
-| outcome | TEXT | no | call: `completed`, `dropped`, `no_answer`, `rejected`, `not_placed`, `unknown`, `ended_early`; sms: `received`, `delivered`, `not_received`, `no_report`, `delivery_failed`, `not_sent` |
+| outcome | TEXT | no | call: `completed`, `dropped`, `setup_timeout`, `no_answer`, `rejected`, `not_placed`, `unknown`, `ended_early`; sms: `received`, `delivered`, `not_received`, `no_report`, `delivery_failed`, `not_sent` |
 | error | TEXT | yes | Failure reason |
-| window_s | INTEGER | yes | Call: planned duration from dialling |
+| window_s | INTEGER | yes | Call: release time after dialling (setup timeout + holding time) |
 | call_ms | REAL | yes | Call: dialling → release |
 | setup_ms | REAL | yes | Call: `call_ms − connected_s × 1000` |
 | connected_s | INTEGER | yes | Call: call-log connected duration |
 | dropped | INTEGER | yes | Call: 1 = ended early after connecting |
+| voice_rat | TEXT | yes | Call: voice technology in call, `GSM`, `UMTS`, `VoLTE`, `VoNR`; changes as `VoLTE>UMTS` |
 | loopback | INTEGER | yes | SMS: sent to this phone |
 | send_ms, delivery_ms, receive_ms | REAL | yes | SMS: submission → sent report / delivery report / arrival |
 | created_at | TEXT | no | UTC ISO 8601 |

@@ -156,7 +156,10 @@ void main() {
       final o = await c.read(stepExecutorProvider).run(ScriptStep(type));
       expect(vs.kinds.single, {kind});
       expect(o.ok, isTrue);
-      expect(o.summary, 'Line A: completed · setup 4.2 s · connected 26 s');
+      expect(
+        o.summary,
+        'Line A: completed · VoLTE · setup 4.2 s · connected 136 s',
+      );
     }
     final refused = ScriptedVoiceSms(
       const VoiceSmsRunState(error: 'Allow voice and SMS tests in Privacy'),

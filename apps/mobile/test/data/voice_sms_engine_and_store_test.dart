@@ -41,6 +41,7 @@ void main() {
               'setup_ms': 5100.0,
               'connected_s': 25,
               'dropped': false,
+              'voice_rat': 'VoLTE',
             },
             'sms' => throw PlatformException(code: 'X', message: 'boom'),
             _ => null,
@@ -61,15 +62,21 @@ void main() {
       expect(perms.all, isFalse);
       expect((await engine.requestPermissions()).call, isFalse);
       const line = PhoneTarget('A', '+67571234567');
-      final call = await engine.call(line, window: const Duration(seconds: 30));
+      final call = await engine.call(
+        line,
+        setupTimeout: const Duration(seconds: 20),
+        hold: const Duration(seconds: 120),
+      );
       expect(calls.last.arguments, {
         'number': '+67571234567',
-        'window_ms': 30000,
+        'window_ms': 140000,
+        'setup_timeout_ms': 20000,
       });
       expect(call.status, TestStatus.ok);
       expect(call.setupMs, 5100);
       expect(call.connectedS, 25);
       expect(call.dropped, isFalse);
+      expect(call.voiceRat, 'VoLTE');
       expect(call.loopback, isNull);
       const me = PhoneTarget('Me', '70000011', loopback: true);
       final sms = await engine.sms(me, timeout: const Duration(seconds: 20));

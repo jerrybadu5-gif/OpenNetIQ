@@ -13,7 +13,8 @@
 ## On device (#25 protocol)
 1. Privacy shows policy 1.1 and asks again; *Allow voice and SMS tests* off by default; Start disabled.
 2. Opt in → Android asks for phone, call log and SMS permissions.
-3. Call line with auto-answer: outcome *completed*, setup time 3–15 s, connected ≈ window − setup.
+3. Call line with auto-answer: outcome *completed*, setup time 3–15 s, connected ≈ 140 s − setup, technology shown (VoLTE on an IMS-capable SIM; UMTS/GSM after CS fallback); next call starts 30 s after release.
+3a. A line that answers after more than 20 s: *setup timeout*.
 4. Call a busy/rejecting number: *rejected*; unanswered: *no answer*; hang up the far end early: *dropped*.
 5. Revoke call-log permission: result *partial*, setup time `-`.
 6. SMS to `| self` line: *received*, receive time present; SMS to another phone: *delivered* or *no report*.

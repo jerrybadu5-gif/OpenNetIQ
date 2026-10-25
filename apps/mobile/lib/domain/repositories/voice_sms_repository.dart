@@ -6,7 +6,13 @@ abstract interface class VoiceSmsEngine {
 
   Future<VoiceSmsPermissions> requestPermissions();
 
-  Future<VoiceSmsResult> call(PhoneTarget target, {required Duration window});
+  /// Dials [target] and releases the call [setupTimeout] + [hold] after
+  /// dialling; later setup = unsuccessful (`setup_timeout`).
+  Future<VoiceSmsResult> call(
+    PhoneTarget target, {
+    required Duration setupTimeout,
+    required Duration hold,
+  });
 
   Future<VoiceSmsResult> sms(PhoneTarget target, {required Duration timeout});
 

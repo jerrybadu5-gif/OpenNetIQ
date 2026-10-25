@@ -18,6 +18,7 @@ import '../../fixtures/script_fixtures.dart';
 import '../../fixtures/voice_sms_fixtures.dart';
 
 void main() {
+  late List<Duration> delays;
   late AppDatabase db;
   late FakeVoiceSmsEngine engine;
   late MemorySettings settings;
@@ -29,6 +30,7 @@ void main() {
         if (consent) voiceSmsConsentOverride else grantedConsentOverride,
         appDatabaseProvider.overrideWithValue(db),
         voiceSmsEngineProvider.overrideWithValue(engine),
+        voiceSmsDelayProvider.overrideWithValue((d) async => delays.add(d)),
         settingsRepositoryProvider.overrideWithValue(settings),
         testContextProvider.overrideWith(
           (ref) => context = FakeTestContext(ref),
@@ -49,6 +51,7 @@ void main() {
   }
 
   setUp(() {
+    delays = [];
     db = memoryDatabase();
     engine = FakeVoiceSmsEngine();
     settings = MemorySettings()
@@ -64,20 +67,27 @@ void main() {
         .read(voiceSmsControllerProvider.notifier)
         .run(VoiceSmsKind.values.toSet());
     expect(engine.calls, [
-      'call:Line A:30',
+      'call:Line A:20+120',
+      'call:PSTN:20+120',
       'sms:Me:true:20',
       'sms:Line B:false:20',
     ]);
+    expect(delays, [const Duration(seconds: 30)]); // between the two calls
     final s = c.read(voiceSmsControllerProvider);
     expect(s.running, isFalse);
-    expect(s.done, 3);
+    expect(s.done, 4);
     expect(s.error, isNull);
     expect(context.links, ['Voice/SMS test']);
     final rows = await db.select(db.voiceSmsTests).get();
-    expect(rows.map((r) => r.targetMasked).toSet(), {'••67', '••11', '••22'});
+    expect(rows.map((r) => r.targetMasked).toSet(), {
+      '••67',
+      '••34',
+      '••11',
+      '••22',
+    });
     final sub = c.listen(voiceSmsHistoryProvider, (_, _) {});
     addTearDown(sub.close);
-    expect(await c.read(voiceSmsHistoryProvider.future), hasLength(3));
+    expect(await c.read(voiceSmsHistoryProvider.future), hasLength(4));
   });
 
   test('refuses to run without voice/SMS consent', () async {

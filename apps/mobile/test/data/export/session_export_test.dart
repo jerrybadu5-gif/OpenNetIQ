@@ -142,6 +142,7 @@ void main() {
     expect(r['outcome'], 'completed');
     expect(r['setup_ms'], '5200.0');
     expect(r['dropped'], 'false');
+    expect(r['voice_rat'], 'VoLTE>UMTS');
     expect(r['lat'], '-9.45');
     expect(r['receive_ms'], '');
   });

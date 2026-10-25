@@ -189,7 +189,8 @@ class VoiceSmsResultTile extends StatelessWidget {
       ('Outcome', r.outcome.replaceAll('_', ' ')),
       if (r.error != null) ('Error', r.error!),
       if (r.kind == VoiceSmsKind.call) ...[
-        ('Call window', r.windowS == null ? '-' : '${r.windowS} s'),
+        ('Released after', r.windowS == null ? '-' : '${r.windowS} s'),
+        ('Technology', r.voiceRat ?? '-'),
         ('Setup time', ms(r.setupMs)),
         ('Connected', r.connectedS == null ? '-' : '${r.connectedS} s'),
         ('Dropped', r.dropped == null ? '-' : (r.dropped! ? 'yes' : 'no')),
@@ -267,32 +268,36 @@ class _LinesCard extends ConsumerWidget {
   }
 
   Future<void> _options(BuildContext context, WidgetRef ref) async {
-    final window = TextEditingController(text: '${settings.callWindowSeconds}');
-    final timeout = TextEditingController(
-      text: '${settings.smsTimeoutSeconds}',
+    TextEditingController field(int v) => TextEditingController(text: '$v');
+    final setup = field(settings.setupTimeoutSeconds);
+    final hold = field(settings.holdSeconds);
+    final interval = field(settings.intervalSeconds);
+    final timeout = field(settings.smsTimeoutSeconds);
+    Widget number(TextEditingController c, String label) => TextField(
+      controller: c,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(labelText: label),
     );
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Options'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: window,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Call length from dialling (s)',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              number(setup, 'Call setup timeout (s)'),
+              number(hold, 'Call holding time (s)'),
+              number(interval, 'Interval between calls (s)'),
+              number(timeout, 'SMS timeout (s)'),
+              const SizedBox(height: 8),
+              const Text(
+                'NICTA QoS Rule 2022 (Schedule 1): setup 20 s, holding '
+                '120 s, interval 30 s.',
               ),
-            ),
-            TextField(
-              controller: timeout,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: 'SMS timeout (s)'),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -307,12 +312,16 @@ class _LinesCard extends ConsumerWidget {
       ),
     );
     if (!(ok ?? false)) return;
+    int read(TextEditingController c, int fallback, int min, int max) =>
+        (int.tryParse(c.text) ?? fallback).clamp(min, max);
     await ref
         .read(voiceSmsSettingsProvider.notifier)
         .save(
           settings.copyWith(
-            callWindowSeconds: (int.tryParse(window.text) ?? 45).clamp(10, 600),
-            smsTimeoutSeconds: (int.tryParse(timeout.text) ?? 60).clamp(5, 600),
+            setupTimeoutSeconds: read(setup, 20, 5, 120),
+            holdSeconds: read(hold, 120, 5, 480),
+            intervalSeconds: read(interval, 30, 0, 600),
+            smsTimeoutSeconds: read(timeout, 60, 5, 600),
           ),
         );
   }
@@ -345,8 +354,9 @@ class _LinesCard extends ConsumerWidget {
           ListTile(
             title: const Text('Test numbers'),
             subtitle: Text(
-              'Call ${settings.callWindowSeconds} s from dialling · SMS '
-              'timeout ${settings.smsTimeoutSeconds} s',
+              'Call: setup ${settings.setupTimeoutSeconds} s + hold '
+              '${settings.holdSeconds} s, interval ${settings.intervalSeconds} s'
+              ' · SMS timeout ${settings.smsTimeoutSeconds} s',
             ),
             trailing: TextButton(
               onPressed: locked ? null : () => _options(context, ref),

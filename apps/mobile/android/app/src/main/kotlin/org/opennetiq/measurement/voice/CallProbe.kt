@@ -8,17 +8,20 @@ import android.net.Uri
 import android.os.SystemClock
 import android.provider.CallLog
 import android.telecom.TelecomManager
+import android.telephony.TelephonyManager
 
 /**
- * One mobile-originated test call (issue #30): dial, keep the call for the
- * window counted from dialling, release, then read the connected duration
- * of that call from the call log. Answer detection is not available to
- * non-dialer apps, so the setup time is derived as window - connected time
- * (1 s resolution, ADR-022). Blocking: run off the main thread.
+ * One mobile-originated test call (issue #30): dial, keep the call for
+ * setup timeout + holding time counted from dialling (NICTA QoS Rule 2022
+ * Schedule 1: 20 s + 120 s), release, then read the connected duration of
+ * that call from the call log. Answer detection is not available to
+ * non-dialer apps, so the setup time is derived as call time - connected
+ * time (1 s resolution, ADR-022). Blocking: run off the main thread.
  */
 class CallProbe(context: Context) {
     private val appContext = context.applicationContext
     private val telecom = appContext.getSystemService(TelecomManager::class.java)
+    private val telephony = appContext.getSystemService(TelephonyManager::class.java)
 
     @Volatile private var cancelled = false
 
@@ -37,6 +40,13 @@ class CallProbe(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
+    private fun voiceRat(): String? = try {
+        telephony?.voiceNetworkType?.let(VoiceSmsRules::voiceRat)
+    } catch (e: SecurityException) {
+        null
+    }
+
+    @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
     private fun endCall(): Boolean = try {
         telecom?.endCall() == true
@@ -45,7 +55,7 @@ class CallProbe(context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun run(number: String, windowMs: Long): Map<String, Any?> {
+    fun run(number: String, windowMs: Long, setupTimeoutMs: Long = windowMs): Map<String, Any?> {
         cancelled = false
         val n = VoiceSmsRules.normalise(number)
         val masked = VoiceSmsRules.mask(n)
@@ -73,9 +83,11 @@ class CallProbe(context: Context) {
             SystemClock.sleep(POLL_MS)
         }
         var endedByUs = false
+        val rats = mutableListOf<String>()
         if (placed) {
             while (!cancelled) {
                 if (!inCall()) break
+                voiceRat()?.let(rats::add)
                 if (SystemClock.elapsedRealtime() - dialAt >= windowMs) {
                     endedByUs = true
                     endCall()
@@ -95,16 +107,18 @@ class CallProbe(context: Context) {
         }
         val wallMs = SystemClock.elapsedRealtime() - dialAt
         val connected = if (placed) connectedSeconds(dialWall) else null
-        val o = VoiceSmsRules.classifyCall(placed, endedByUs, wallMs, connected)
+        val o = VoiceSmsRules.classifyCall(placed, endedByUs, wallMs, connected, setupTimeoutMs)
         return mapOf(
             "status" to o.status,
             "outcome" to o.outcome,
             "target_masked" to masked,
             "window_s" to (windowMs / 1000).toInt(),
+            "setup_timeout_s" to (setupTimeoutMs / 1000).toInt(),
             "call_ms" to wallMs.toDouble(),
             "setup_ms" to o.setupMs?.toDouble(),
             "connected_s" to o.connectedS,
             "dropped" to o.dropped,
+            "voice_rat" to VoiceSmsRules.ratSequence(rats),
             "error" to when {
                 cancelled -> "cancelled"
                 placed && connected == null -> "Call log not readable: setup time unknown"

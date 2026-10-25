@@ -53,8 +53,32 @@ class VoiceSmsRulesTest {
     }
 
     @Test
+    fun `calls set up after the setup timeout are unsuccessful`() {
+        // NICTA Schedule 1: 20 s setup + 120 s hold = 140 s from dialling.
+        val ok = VoiceSmsRules.classifyCall(true, true, 140_300, 128, setupTimeoutMs = 20_000)
+        assertEquals("completed", ok.outcome)
+        assertEquals(12_300L, ok.setupMs)
+        val late = VoiceSmsRules.classifyCall(true, true, 140_300, 115, setupTimeoutMs = 20_000)
+        assertEquals("failed", late.status)
+        assertEquals("setup_timeout", late.outcome)
+        assertEquals(25_300L, late.setupMs)
+        assertNull(late.dropped)
+    }
+
+    @Test
     fun `setup time never goes negative`() {
         assertEquals(0L, VoiceSmsRules.classifyCall(true, true, 44_800, 45).setupMs)
+    }
+
+    @Test
+    fun `voice technology and sequence`() {
+        assertEquals("GSM", VoiceSmsRules.voiceRat(16))
+        assertEquals("UMTS", VoiceSmsRules.voiceRat(15))
+        assertEquals("VoLTE", VoiceSmsRules.voiceRat(13))
+        assertEquals("VoNR", VoiceSmsRules.voiceRat(20))
+        assertNull(VoiceSmsRules.voiceRat(0))
+        assertEquals("VoLTE>UMTS", VoiceSmsRules.ratSequence(listOf("VoLTE", "VoLTE", "UMTS", "UMTS")))
+        assertNull(VoiceSmsRules.ratSequence(emptyList()))
     }
 
     @Test

@@ -33,8 +33,16 @@ object VoiceSmsRules {
      * @param endedByUs we released the call at the end of the window
      * @param wallMs dialling to call end
      * @param connectedS call-log duration (s), null when the call log is unreadable
+     * @param setupTimeoutMs a call set up later than this is unsuccessful
+     *   (NICTA QoS Rule 2022 Schedule 1: 20 s)
      */
-    fun classifyCall(placed: Boolean, endedByUs: Boolean, wallMs: Long, connectedS: Int?): CallOutcome {
+    fun classifyCall(
+        placed: Boolean,
+        endedByUs: Boolean,
+        wallMs: Long,
+        connectedS: Int?,
+        setupTimeoutMs: Long = Long.MAX_VALUE,
+    ): CallOutcome {
         if (!placed) return CallOutcome("failed", "not_placed", null, null, null)
         if (connectedS == null) {
             return CallOutcome("partial", if (endedByUs) "unknown" else "ended_early", null, null, null)
@@ -43,12 +51,30 @@ object VoiceSmsRules {
             return CallOutcome("failed", if (endedByUs) "no_answer" else "rejected", null, 0, null)
         }
         val setup = max(0L, wallMs - connectedS * 1000L)
+        if (setup > setupTimeoutMs) return CallOutcome("failed", "setup_timeout", setup, connectedS, null)
         return if (endedByUs) {
             CallOutcome("ok", "completed", setup, connectedS, false)
         } else {
             CallOutcome("failed", "dropped", setup, connectedS, true)
         }
     }
+
+    /**
+     * Voice technology from `TelephonyManager.getVoiceNetworkType()` while in
+     * call: GSM/UMTS = circuit switched (incl. CS fallback), VoLTE, VoNR.
+     */
+    fun voiceRat(networkType: Int): String? = when (networkType) {
+        1, 2, 16 -> "GSM"
+        3, 8, 9, 10, 15 -> "UMTS"
+        13, 19 -> "VoLTE"
+        20 -> "VoNR"
+        else -> null
+    }
+
+    /** Distinct technologies in order of appearance, e.g. `VoLTE>UMTS` (SRVCC). */
+    fun ratSequence(seen: List<String>): String? =
+        seen.fold(mutableListOf<String>()) { acc, r -> if (acc.lastOrNull() != r) acc += r; acc }
+            .takeIf { it.isNotEmpty() }?.joinToString(">")
 
     data class SmsOutcome(val status: String, val outcome: String)
 

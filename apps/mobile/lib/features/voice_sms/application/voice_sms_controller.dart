@@ -60,6 +60,11 @@ final voiceSmsHistoryProvider = StreamProvider<List<VoiceSmsRecord>>(
   isAutoDispose: true,
 );
 
+/// Waits between calls; overridable so tests do not sleep.
+final voiceSmsDelayProvider = Provider<Future<void> Function(Duration)>(
+  (ref) => Future<void>.delayed,
+);
+
 /// Android permission state; refresh with `ref.invalidate`.
 final voiceSmsPermissionsProvider =
     FutureProvider.autoDispose<VoiceSmsPermissions>(
@@ -127,8 +132,23 @@ class VoiceSmsController extends Notifier<VoiceSmsRunState> {
     ({String? sessionId, String? measurementId})? link;
     final results = <VoiceSmsResult>[];
     String? error;
+    var callsMade = 0;
     for (final (kind, target) in plan) {
       if (!state.running) break;
+      if (kind == VoiceSmsKind.call && callsMade > 0) {
+        state = VoiceSmsRunState(
+          running: true,
+          current: 'Interval ${settings.intervalSeconds} s',
+          done: results.length,
+          total: plan.length,
+          results: List.unmodifiable(results),
+        );
+        await ref.read(voiceSmsDelayProvider)(
+          Duration(seconds: settings.intervalSeconds),
+        );
+        if (!state.running) break;
+      }
+      if (kind == VoiceSmsKind.call) callsMade++;
       state = VoiceSmsRunState(
         running: true,
         current: '${kind.label}: ${target.name}',
@@ -140,7 +160,8 @@ class VoiceSmsController extends Notifier<VoiceSmsRunState> {
       final result = await switch (kind) {
         VoiceSmsKind.call => engine.call(
           target,
-          window: Duration(seconds: settings.callWindowSeconds),
+          setupTimeout: Duration(seconds: settings.setupTimeoutSeconds),
+          hold: Duration(seconds: settings.holdSeconds),
         ),
         VoiceSmsKind.sms => engine.sms(
           target,

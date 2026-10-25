@@ -36,9 +36,10 @@ class VoiceSmsBridge(context: Context, messenger: BinaryMessenger) : MethodChann
             "request_permissions" -> request(result)
             "call" -> {
                 val number = call.argument<String>("number") ?: return badArgs(result)
-                val window = (call.argument<Number>("window_ms") ?: 45_000).toLong().coerceIn(10_000, 600_000)
+                val window = (call.argument<Number>("window_ms") ?: 140_000).toLong().coerceIn(10_000, 600_000)
+                val setupTimeout = (call.argument<Number>("setup_timeout_ms") ?: 20_000).toLong().coerceIn(1_000, window)
                 io.execute {
-                    val r = calls.run(number, window)
+                    val r = calls.run(number, window, setupTimeout)
                     main.post { result.success(r) }
                 }
             }

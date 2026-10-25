@@ -10,11 +10,14 @@ but must not replace the user's phone app. MOS/POLQA is out of scope.
 
 ## Decision
 - Calls: `TelecomManager.placeCall` (CALL_PHONE), call presence polled with
-  `isInCall` every 200 ms, released with `endCall` (ANSWER_PHONE_CALLS) at a
-  fixed **window from dialling** (default 45 s). Answer is derived after the
+  `isInCall` every 200 ms, released with `endCall` (ANSWER_PHONE_CALLS)
+  **setup timeout + holding time after dialling** (NICTA QoS Rule 2022
+  Schedule 1 defaults: 20 s + 120 s, then a 30 s interval = 170 s window).
+  A call set up later than the timeout counts as unsuccessful (`setup_timeout`).
+  The voice technology seen in call (`getVoiceNetworkType`) is recorded as `voice_rat`. Answer is derived after the
   call from the call log's DURATION of the latest outgoing call
   (READ_CALL_LOG; only DATE/TYPE/DURATION are queried): setup time =
-  window − connected (1 s resolution). Early end after connecting = drop.
+  call time − connected (1 s resolution). Early end after connecting = drop.
 - SMS: `SmsManager.sendTextMessage` with sent and delivery PendingIntents;
   loopback targets (own number) also time the arrival via `SMS_RECEIVED`,
   matching a random token in memory.

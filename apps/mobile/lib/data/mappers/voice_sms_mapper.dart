@@ -23,6 +23,7 @@ abstract final class VoiceSmsMapper {
     setupMs: _d(m['setup_ms']),
     connectedS: _i(m['connected_s']),
     dropped: m['dropped'] as bool?,
+    voiceRat: m['voice_rat'] as String?,
     loopback: kind == VoiceSmsKind.sms
         ? (m['loopback'] as bool? ?? target.loopback)
         : null,

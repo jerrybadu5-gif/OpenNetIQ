@@ -49,13 +49,20 @@ class PlatformVoiceSmsEngine implements VoiceSmsEngine {
   }
 
   @override
-  Future<VoiceSmsResult> call(PhoneTarget t, {required Duration window}) =>
-      _run(
-        'call',
-        {'number': t.number, 'window_ms': window.inMilliseconds},
-        VoiceSmsKind.call,
-        t,
-      );
+  Future<VoiceSmsResult> call(
+    PhoneTarget t, {
+    required Duration setupTimeout,
+    required Duration hold,
+  }) => _run(
+    'call',
+    {
+      'number': t.number,
+      'window_ms': (setupTimeout + hold).inMilliseconds,
+      'setup_timeout_ms': setupTimeout.inMilliseconds,
+    },
+    VoiceSmsKind.call,
+    t,
+  );
 
   @override
   Future<VoiceSmsResult> sms(PhoneTarget t, {required Duration timeout}) =>

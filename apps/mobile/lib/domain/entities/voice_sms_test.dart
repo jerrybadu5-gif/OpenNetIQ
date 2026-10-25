@@ -85,11 +85,16 @@ class PhoneTarget {
   }
 }
 
+/// Call timing defaults follow the NICTA Telecommunications QoS Rule 2022,
+/// Schedule 1 guideline (9): setup 20 s, holding 120 s, interval 30 s
+/// (total call window 170 s).
 class VoiceSmsSettings {
   const VoiceSmsSettings({
     this.callTargets = const [],
     this.smsTargets = const [],
-    this.callWindowSeconds = 45,
+    this.setupTimeoutSeconds = 20,
+    this.holdSeconds = 120,
+    this.intervalSeconds = 30,
     this.smsTimeoutSeconds = 60,
   });
 
@@ -102,7 +107,9 @@ class VoiceSmsSettings {
     return VoiceSmsSettings(
       callTargets: list(j['call_targets']),
       smsTargets: list(j['sms_targets']),
-      callWindowSeconds: (j['call_window_s'] as num?)?.toInt() ?? 45,
+      setupTimeoutSeconds: (j['setup_timeout_s'] as num?)?.toInt() ?? 20,
+      holdSeconds: (j['hold_s'] as num?)?.toInt() ?? 120,
+      intervalSeconds: (j['interval_s'] as num?)?.toInt() ?? 30,
       smsTimeoutSeconds: (j['sms_timeout_s'] as num?)?.toInt() ?? 60,
     );
   }
@@ -110,8 +117,21 @@ class VoiceSmsSettings {
   final List<PhoneTarget> callTargets;
   final List<PhoneTarget> smsTargets;
 
-  /// Call kept for this long from dialling, then released.
-  final int callWindowSeconds;
+  /// A call not set up within this time is unsuccessful.
+  final int setupTimeoutSeconds;
+
+  /// Holding time after setup. The call is released setup timeout + hold
+  /// after dialling, so a call set up in time is held at least this long.
+  final int holdSeconds;
+
+  /// Idle time between consecutive calls.
+  final int intervalSeconds;
+
+  /// Dialling to release.
+  int get callWindowSeconds => setupTimeoutSeconds + holdSeconds;
+
+  /// One call cycle including the interval (NICTA: 170 s).
+  int get totalCallWindowSeconds => callWindowSeconds + intervalSeconds;
 
   /// Wait for delivery report / arrival.
   final int smsTimeoutSeconds;
@@ -122,20 +142,26 @@ class VoiceSmsSettings {
   VoiceSmsSettings copyWith({
     List<PhoneTarget>? callTargets,
     List<PhoneTarget>? smsTargets,
-    int? callWindowSeconds,
+    int? setupTimeoutSeconds,
+    int? holdSeconds,
+    int? intervalSeconds,
     int? smsTimeoutSeconds,
   }) => VoiceSmsSettings(
     callTargets: callTargets ?? this.callTargets,
     smsTargets: smsTargets ?? this.smsTargets,
-    callWindowSeconds: callWindowSeconds ?? this.callWindowSeconds,
+    setupTimeoutSeconds: setupTimeoutSeconds ?? this.setupTimeoutSeconds,
+    holdSeconds: holdSeconds ?? this.holdSeconds,
+    intervalSeconds: intervalSeconds ?? this.intervalSeconds,
     smsTimeoutSeconds: smsTimeoutSeconds ?? this.smsTimeoutSeconds,
   );
 
   Map<String, Object?> toJson() => {
-    'version': 1,
+    'version': 2,
     'call_targets': [for (final t in callTargets) t.toJson()],
     'sms_targets': [for (final t in smsTargets) t.toJson()],
-    'call_window_s': callWindowSeconds,
+    'setup_timeout_s': setupTimeoutSeconds,
+    'hold_s': holdSeconds,
+    'interval_s': intervalSeconds,
     'sms_timeout_s': smsTimeoutSeconds,
   };
 }
@@ -154,6 +180,7 @@ class VoiceSmsResult {
     this.setupMs,
     this.connectedS,
     this.dropped,
+    this.voiceRat,
     this.loopback,
     this.sendMs,
     this.deliveryMs,
@@ -165,8 +192,8 @@ class VoiceSmsResult {
   final String targetMasked;
   final TestStatus status;
 
-  /// call: completed, dropped, no_answer, rejected, not_placed, unknown,
-  /// ended_early. sms: received, delivered, not_received, no_report,
+  /// call: completed, dropped, setup_timeout, no_answer, rejected,
+  /// not_placed, unknown, ended_early. sms: received, delivered, not_received, no_report,
   /// delivery_failed, not_sent.
   final String outcome;
   final String? error;
@@ -175,13 +202,17 @@ class VoiceSmsResult {
   final double? setupMs;
   final int? connectedS;
   final bool? dropped;
+
+  /// Voice technology during the call (GSM, UMTS, VoLTE, VoNR; `A>B` on a
+  /// change such as SRVCC or CS fallback).
+  final String? voiceRat;
   final bool? loopback;
   final double? sendMs;
   final double? deliveryMs;
   final double? receiveMs;
 
-  /// Call set up (counts toward call setup success ratio).
-  bool get setupSuccess => (connectedS ?? 0) > 0;
+  /// Call set up within the setup timeout (NICTA: not a failed attempt).
+  bool get setupSuccess => outcome == 'completed' || outcome == 'dropped';
 
   static String _s(double? ms) =>
       ms == null ? '-' : '${(ms / 1000).toStringAsFixed(1)} s';
@@ -189,6 +220,7 @@ class VoiceSmsResult {
   String get summary => switch (kind) {
     VoiceSmsKind.call => [
       outcome.replaceAll('_', ' '),
+      ?voiceRat,
       if (setupMs != null) 'setup ${_s(setupMs)}',
       if (connectedS != null && connectedS! > 0) 'connected $connectedS s',
     ].join(' · '),

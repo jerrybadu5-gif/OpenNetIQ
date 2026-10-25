@@ -23,18 +23,25 @@ void main() {
     const s = VoiceSmsSettings(
       callTargets: [PhoneTarget('A', '123456')],
       smsTargets: [PhoneTarget('Me', '654321', loopback: true)],
-      callWindowSeconds: 60,
+      setupTimeoutSeconds: 15,
+      holdSeconds: 60,
+      intervalSeconds: 10,
       smsTimeoutSeconds: 30,
     );
     final back = VoiceSmsSettings.fromJson(s.toJson());
     expect(back.callTargets.single.number, '123456');
     expect(back.smsTargets.single.loopback, isTrue);
-    expect(back.callWindowSeconds, 60);
+    expect(back.callWindowSeconds, 75);
+    expect(back.totalCallWindowSeconds, 85);
+    expect(back.intervalSeconds, 10);
     expect(back.smsTimeoutSeconds, 30);
     expect(back.targets(VoiceSmsKind.sms).single.name, 'Me');
     final empty = VoiceSmsSettings.fromJson(const {'call_targets': 'x'});
     expect(empty.callTargets, isEmpty);
-    expect(empty.callWindowSeconds, 45);
+    // NICTA QoS Rule 2022 Schedule 1 defaults: 20 + 120 + 30 = 170 s.
+    expect(empty.setupTimeoutSeconds, 20);
+    expect(empty.holdSeconds, 120);
+    expect(empty.totalCallWindowSeconds, 170);
     expect(empty.smsTimeoutSeconds, 60);
     expect(s.copyWith(smsTimeoutSeconds: 9).smsTimeoutSeconds, 9);
     expect(VoiceSmsKind.fromWire('sms'), VoiceSmsKind.sms);
@@ -52,6 +59,16 @@ void main() {
     );
     expect(call.summary, 'no answer');
     expect(call.setupSuccess, isFalse);
+    const late = VoiceSmsResult(
+      kind: VoiceSmsKind.call,
+      label: 'A',
+      targetMasked: '••67',
+      status: TestStatus.failed,
+      outcome: 'setup_timeout',
+      setupMs: 25000,
+      connectedS: 115,
+    );
+    expect(late.setupSuccess, isFalse);
     const sms = VoiceSmsResult(
       kind: VoiceSmsKind.sms,
       label: 'Me',

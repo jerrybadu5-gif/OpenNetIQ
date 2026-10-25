@@ -153,4 +153,23 @@ const List<TestScript> presetScripts = [
     cycles: 0,
     cycleIntervalSeconds: 120,
   ),
+  // NICTA QoS Rule 2022 Schedule 1: 170 s call window (20 s setup, 120 s
+  // holding from the voice settings, 30 s interval).
+  TestScript(
+    id: 'preset-nicta-voice',
+    name: 'NICTA voice (Schedule 1)',
+    steps: [ScriptStep(StepType.call)],
+    cycles: 0,
+    cycleIntervalSeconds: 170,
+  ),
+  // Schedule 2: FTP-equivalent file transfer, ping, 5 web pages.
+  TestScript(
+    id: 'preset-nicta-data',
+    name: 'NICTA mobile broadband (Schedule 2)',
+    steps: [
+      ScriptStep(StepType.file),
+      ScriptStep(StepType.latency),
+      ScriptStep(StepType.web),
+    ],
+  ),
 ];

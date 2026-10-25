@@ -164,6 +164,7 @@ Future<void> seedExportSession(AppDatabase db, {String name = 'POM Route 1'}) =>
               setupMs: const Value(5200),
               connectedS: const Value(39),
               dropped: const Value(false),
+              voiceRat: const Value('VoLTE>UMTS'),
               createdAt: ts,
             ),
           );

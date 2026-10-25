@@ -292,6 +292,7 @@ class VoiceSmsTests extends Table {
   late final setupMs = real().nullable()();
   late final connectedS = integer().nullable()();
   late final dropped = boolean().nullable()();
+  late final voiceRat = text().nullable()();
   late final loopback = boolean().nullable()();
   late final sendMs = real().nullable()();
   late final deliveryMs = real().nullable()();
