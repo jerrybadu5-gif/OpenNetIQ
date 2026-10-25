@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from . import files, radio, report, sampling, throughput
+from . import files, nicta, radio, report, sampling, throughput
 from .io import read_csv
 from .profiles import PROFILES, parse_overrides
 
@@ -56,6 +56,14 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--battery-start", type=float, help="battery %% at start")
     s.add_argument("--battery-end", type=float, help="battery %% at end")
 
+    rp = sub.add_parser("report", help="NICTA QoS Rule 2022 Appendix A/B tables from app exports")
+    rp.add_argument("exports", nargs="+", type=Path, help="export CSVs or folders (recursive)")
+    rp.add_argument("--rule", choices=[nicta.RULE], default=nicta.RULE)
+    rp.add_argument("--licensee", default="(licensee)", help="operator name for the title")
+    rp.add_argument("--period", help="measurement period, e.g. 2026H2 (default: all data)")
+    rp.add_argument("--csv-dir", type=Path, help="write the tables as CSV files here")
+    rp.add_argument("--xlsx", type=Path, help="write an Excel workbook (needs openpyxl)")
+
     f = sub.add_parser("files", help="exports open cleanly (structure checks)")
     f.add_argument("--csv", type=Path, action="append", default=[], help="samples CSV")
     f.add_argument("--geojson", type=Path, action="append", default=[])
@@ -90,6 +98,16 @@ def run(argv: list[str]) -> tuple[int, str, dict[str, Any]]:
         )
         ok = result.sampling_passed and result.battery_passed is not False
         return (0 if ok else 1), report.sampling_md(result), {"sampling": result}
+    if args.command == "report":
+        period = nicta.Period.parse(args.period) if args.period else None
+        rep = nicta.build(nicta.find_exports(args.exports), args.licensee, period)
+        notes = []
+        if args.csv_dir:
+            notes += [f"wrote {p}" for p in nicta.write_csvs(rep, args.csv_dir)]
+        if args.xlsx:
+            notes.append(f"wrote {nicta.write_xlsx(rep, args.xlsx)}")
+        text = nicta.markdown(rep) + ("\n\n" + "\n".join(notes) if notes else "")
+        return (0 if rep.passed else 1), text, {"report": rep}
     checked = {str(p): files.check_csv(p) for p in args.csv}
     checked |= {str(p): files.check_geojson(p) for p in args.geojson}
     if not checked:

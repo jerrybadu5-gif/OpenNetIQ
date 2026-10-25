@@ -7,6 +7,7 @@
 | `throughput` | `*_tests.csv` (`test_type=speed`, `status` ok/partial, `dl_mean_mbps`, `ul_mean_mbps`) | `timestamp, dl_mbps, ul_mbps` (override with `--map time= dl= ul= time_format=`) |
 | `sampling` | samples CSV (`timestamp`, `lat`, `h_accuracy_m`) | – |
 | `files` | `--csv` / `--geojson` (repeatable) | – |
+| `report` | export files/folders, `--rule nicta-qos-2022`, `--licensee`, `--period YYYYH1/H2`, `--csv-dir`, `--xlsx` | Appendix A/B and sample counts (`appendix_a_mobile_telephony.csv`, `appendix_b_mobile_broadband.csv`, `sample_checks.csv`, workbook with Report / Appendix A / Appendix B / Sample checks sheets) |
 
 Times: ISO 8601 with zone, or naive + `--ref-utc-offset H` (subtracted).
 `--offset S` shifts OpenNetIQ times when clocks differ.
