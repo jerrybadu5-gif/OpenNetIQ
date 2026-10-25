@@ -35,6 +35,15 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.signal),
           ),
           ListTile(
+            leading: const Icon(Icons.playlist_play),
+            title: const Text('Test scripts'),
+            subtitle: const Text(
+              'Repeat speed and latency tests automatically, e.g. on a drive',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.scripts),
+          ),
+          ListTile(
             leading: const Icon(Icons.cell_tower),
             title: const Text('Cell scan'),
             subtitle: const Text(
