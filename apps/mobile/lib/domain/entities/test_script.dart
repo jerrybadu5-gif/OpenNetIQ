@@ -11,15 +11,15 @@ enum StepType {
   video('video', 'Video streaming', available: true),
   apps('apps', 'App reachability', available: true),
   file('file', 'File transfer', available: true),
-  call('call', 'Voice call'),
-  sms('sms', 'SMS');
+  call('call', 'Voice call', available: true),
+  sms('sms', 'SMS', available: true);
 
   const StepType(this.wireValue, this.label, {this.available = false});
 
   final String wireValue;
   final String label;
 
-  /// Implemented in this build; call and SMS arrive with #30.
+  /// Implemented in this build.
   final bool available;
 
   static StepType? fromWire(String? value) {

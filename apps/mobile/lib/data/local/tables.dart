@@ -261,6 +261,47 @@ class QoeTests extends Table {
   Set<Column<Object>> get primaryKey => {testId};
 }
 
+/// Voice call and SMS tests (schema v3, issue #30, ADR-022). No dialled
+/// number or message text: only the last two digits ([targetMasked]).
+@DataClassName('VoiceSmsTestRow')
+class VoiceSmsTests extends Table {
+  late final testId = text()();
+  late final sessionId = text().nullable().references(
+    Sessions,
+    #sessionId,
+    onDelete: KeyAction.cascade,
+  )();
+  late final measurementId = text().nullable().references(
+    Samples,
+    #measurementId,
+  )();
+  late final timestamp = text()();
+  late final Column<String> kind = text().check(
+    kind.isIn(const ['call', 'sms']),
+  )();
+  late final methodologyVersion = text()();
+  late final label = text()();
+  late final targetMasked = text()();
+  late final Column<String> status = text().check(
+    status.isIn(const ['ok', 'partial', 'failed']),
+  )();
+  late final outcome = text()();
+  late final error = text().nullable()();
+  late final windowS = integer().nullable()();
+  late final callMs = real().nullable()();
+  late final setupMs = real().nullable()();
+  late final connectedS = integer().nullable()();
+  late final dropped = boolean().nullable()();
+  late final loopback = boolean().nullable()();
+  late final sendMs = real().nullable()();
+  late final deliveryMs = real().nullable()();
+  late final receiveMs = real().nullable()();
+  late final createdAt = text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {testId};
+}
+
 @DataClassName('AppSettingRow')
 class AppSettings extends Table {
   late final settingKey = text().named('key')();
@@ -275,7 +316,13 @@ class AppSettings extends Table {
 class ConsentLog extends Table {
   late final consentId = text()();
   late final Column<String> scope = text().check(
-    scope.isIn(const ['location', 'radio', 'background_location', 'upload']),
+    scope.isIn(const [
+      'location',
+      'radio',
+      'background_location',
+      'upload',
+      'voice_sms',
+    ]),
   )();
   late final granted = boolean()();
   late final policyVersion = text()();

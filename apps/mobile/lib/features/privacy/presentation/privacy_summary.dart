@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:opennetiq_mobile/app_routes.dart';
 
 /// What is collected, where it stays, what is never collected
-/// (PRIVACY.md, policy 1.0).
+/// (PRIVACY.md, policy 1.1).
 class PrivacySummary extends StatelessWidget {
   const PrivacySummary({super.key});
 
@@ -12,13 +12,17 @@ class PrivacySummary extends StatelessWidget {
         'and signal levels of the serving and neighbouring cells.',
     'Location: GPS position, speed and accuracy while the signal monitor, '
         'a drive test or a speed/latency test is running.',
-    'Test results: speed, latency, the test server used, phone model and '
-        'Android version.',
+    'Test results: speed, latency, web, video, app and file tests, the '
+        'test server used, phone model and Android version.',
+    'Voice and SMS tests (only if you allow them): call setup time, '
+        'connected time and drops, SMS send and delivery times. The call '
+        "log is read only for the test call's duration.",
   ];
 
   static const never = [
     'Phone number, IMEI, IMSI or SIM serial',
-    'Contacts, messages, call logs, photos or files',
+    'Contacts, message text, other calls, photos or files',
+    'The numbers you test (only the last two digits are kept)',
     'Browsing history or the content of your traffic',
   ];
 
@@ -50,8 +54,9 @@ class PrivacySummary extends StatelessWidget {
         const Text(
           'Measurements stay on this phone. They leave it only when you '
           'export a session and choose where to share it. Speed and latency '
-          'tests connect to the test server you set, which sees your IP '
-          'address. You can delete all measurements at any time.',
+          'tests connect to the test server you set; web, video and app '
+          'tests connect to the sites you list. They see your IP address. '
+          'You can delete all measurements at any time.',
         ),
       ],
     );

@@ -90,6 +90,19 @@ All probes start cold: no HTTP cache, no connection reuse, so DNS, TCP and TLS a
 - **File transfer**: fixed size (default 5 MiB) download from `garbage.php` and upload to `empty.php` of the configured test server, one connection; rate = bytes × 8 / total time (Mbit/s, SI). Complements the multi-connection speed test with a single-transfer user experience.
 - Third-party sites see the phone's IP address; targets and video sources are configured by the operator of the test campaign.
 
+## 6c. Voice call and SMS tests (method `vs-1.0`, issue #30)
+KPI names follow ETSI TS 102 250-2 (telephony, SMS). Tests run only with the `voice_sms` consent, to numbers the campaign configures; each call or SMS is one `voice_sms_tests` row, linked like the other tests.
+- **Voice call (mobile originated)**: `TelecomManager.placeCall` to the test line; the call is kept for the *call window* (default 45 s) counted from dialling, then released by the app. Call state is polled every 200 ms (`isInCall`). Answer time is not visible to non-dialer apps, so after release the connected duration is read from the call log (latest outgoing call since dialling; DATE/TYPE/DURATION only) and:
+  - *setup time* = dialling → release − connected duration (1 s resolution of the call log; ≥ 0);
+  - **completed**: connected > 0 and released by the app at the window end (`ok`);
+  - **dropped**: connected > 0 but ended before the window by the network or far end (`failed`, `dropped = 1`) — use a test line that answers automatically and holds the call;
+  - **no_answer** (released by the app, never connected) / **rejected** (ended by the network/far end, never connected) / **not_placed** (no call within 10 s): setup failures (`failed`);
+  - call log unreadable: `partial` (`unknown` / `ended_early`), setup time NULL.
+  - Ratios for reports: call setup success ratio = connected / attempted; call drop ratio = dropped / connected.
+- **SMS**: one tagged message (`OpenNetIQ test ONQxxxxxx`) via `SmsManager` with sent and delivery reports; times from submission: *send_ms* (sent report), *delivery_ms* (status report, TP-Status < 0x20 = delivered), *receive_ms* (arrival of the same token, loopback targets only = end-to-end delivery time). Timeout default 60 s.
+  - Loopback (`| self` target): `received` = ok, else `not_received` (partial). Other targets: `delivered` = ok, `delivery_failed` = failed, `no_report` = partial (networks may not return reports). Not sent = failed.
+- Privacy: dialled numbers are kept only in local settings; results store `target_masked` (last two digits). Message text is matched in memory and never stored.
+
 ## 6a. Cell scan and estimated sites (issue #27)
 - **Cell scan** aggregates stored `cell_observations` (serving and neighbour). Cell key: RAT + PLMN + cell ID; cells without identity (neighbours reporting only ARFCN + PCI) are keyed by RAT + ARFCN + PCI and take the identity of the single identified cell on the same channel when it is unambiguous. Mean level is the mean of dBm values.
 - **Site** = eNB ID (LTE) or gNB ID (NR); other RATs: the cell. Positions come from all sessions, so they improve with every drive. Mock-location and no-fix samples are excluded; GOOD fixes are used when there are at least 3.

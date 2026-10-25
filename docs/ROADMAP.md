@@ -135,9 +135,9 @@ This is the phased execution plan for OpenNetIQ. Each phase maps 1:1 to a GitHub
 #### 1.11–1.16 v0.1.0 extension (decided 2026-10-21, spec `docs/specs/v0.1.0-extension.md`)
 v0.1.0 ships as one release including G-NetTrack Pro parity; field validation runs once at the end.
 - 1.11 (#27) Cell scan, estimated site layer (timing advance / level centroid, ADR-019), serving lines, KML export — Status: implemented in issue #27 (`docs/features/cell-scan/`).
-- 1.12 (#28) Test scripts: scheduled step sequences during drives — Status: implemented in issue #28 (`docs/features/test-scripts/`, ADR-020); web/video/apps/file and call/SMS steps follow with #29/#30.
+- 1.12 (#28) Test scripts: scheduled step sequences during drives — Status: implemented in issue #28 (`docs/features/test-scripts/`, ADR-020); web/video/apps/file steps added in #29, call/SMS steps in #30.
 - 1.13 (#29) Customer-experience tests: web browsing, video (direct streams and video on web pages), app reachability, file transfer — Status: implemented in issue #29 (`docs/features/qoe-tests/`, ADR-021, schema v2).
-- 1.14 (#30) Voice and SMS sequences (call KPIs only; no MOS).
+- 1.14 (#30) Voice and SMS sequences (call KPIs only; no MOS) — Status: implemented in issue #30 (`docs/features/voice-sms/`, ADR-022, schema v3, privacy policy 1.1 with `voice_sms` consent; call/SMS script steps).
 - 1.15 (#31) Multi-phone benchmarking: shared script, synchronised start, `onq-validate benchmark` merge.
 - 1.16 (#32) Spectrum analyser: "Coming soon" placeholder (tinySA Ultra support after hardware is available).
 

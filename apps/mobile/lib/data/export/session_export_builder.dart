@@ -14,6 +14,7 @@ class SessionExportData {
     this.speedTests = const [],
     this.latencyTests = const [],
     this.qoeTests = const [],
+    this.voiceSmsTests = const [],
   });
 
   final SessionRow session;
@@ -27,6 +28,7 @@ class SessionExportData {
   final List<SpeedTestRow> speedTests;
   final List<LatencyTestRow> latencyTests;
   final List<QoeTestRow> qoeTests;
+  final List<VoiceSmsTestRow> voiceSmsTests;
 
   bool get hasTests => speedTests.isNotEmpty || latencyTests.isNotEmpty;
 }
@@ -427,6 +429,67 @@ class SessionExportBuilder {
     ]);
   }
 
+  static const voiceSmsColumns = [
+    'test_id',
+    'session_id',
+    'measurement_id',
+    'timestamp',
+    'methodology_version',
+    'kind',
+    'label',
+    'target_masked',
+    'status',
+    'outcome',
+    'error',
+    'lat',
+    'lon',
+    'network_type',
+    'window_s',
+    'call_ms',
+    'setup_ms',
+    'connected_s',
+    'dropped',
+    'loopback',
+    'send_ms',
+    'delivery_ms',
+    'receive_ms',
+  ];
+
+  /// Voice call and SMS tests (issue #30), in time order.
+  String voiceSmsCsv() {
+    final byId = _samplesById;
+    final rows = [...data.voiceSmsTests]
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return csvDocument(voiceSmsColumns, [
+      for (final t in rows)
+        [
+          t.testId,
+          t.sessionId,
+          t.measurementId,
+          t.timestamp,
+          t.methodologyVersion,
+          t.kind,
+          t.label,
+          t.targetMasked,
+          t.status,
+          t.outcome,
+          t.error,
+          byId[t.measurementId]?.lat,
+          byId[t.measurementId]?.lon,
+          byId[t.measurementId]?.networkType,
+          t.windowS,
+          t.callMs,
+          t.setupMs,
+          t.connectedS,
+          t.dropped,
+          t.loopback,
+          t.sendMs,
+          t.deliveryMs,
+          t.receiveMs,
+        ],
+    ]);
+  }
+
   /// RFC 7946 FeatureCollection (WGS 84, [lon, lat(, alt)]). Samples without
   /// a fix are left out; their count is in the track properties.
   String geoJson() {
@@ -539,6 +602,30 @@ class SessionExportBuilder {
           'start_delay_ms': t.startDelayMs,
           'rebuffer_count': t.rebufferCount,
           'rate_mbps': t.rateMbps,
+          'methodology_version': t.methodologyVersion,
+        },
+      });
+    }
+    for (final t in data.voiceSmsTests) {
+      final at = byId[t.measurementId];
+      features.add({
+        'type': 'Feature',
+        'geometry': at?.lat == null || at?.lon == null
+            ? null
+            : {'type': 'Point', 'coordinates': coords(at!)},
+        'properties': {
+          'feature_type': 'voice_sms_test',
+          'test_id': t.testId,
+          'measurement_id': t.measurementId,
+          'timestamp': t.timestamp,
+          'kind': t.kind,
+          'label': t.label,
+          'status': t.status,
+          'outcome': t.outcome,
+          'setup_ms': t.setupMs,
+          'dropped': t.dropped,
+          'delivery_ms': t.deliveryMs,
+          'receive_ms': t.receiveMs,
           'methodology_version': t.methodologyVersion,
         },
       });

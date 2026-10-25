@@ -30,6 +30,8 @@ class MainActivity : FlutterActivity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        bridge.onRequestPermissionsResult(requestCode)
+        if (!bridge.onRequestPermissionsResult(requestCode)) {
+            (application as OpenNetIqApplication).voiceSms.onRequestPermissionsResult(requestCode)
+        }
     }
 }

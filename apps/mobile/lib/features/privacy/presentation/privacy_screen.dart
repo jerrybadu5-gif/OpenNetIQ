@@ -7,6 +7,7 @@ import 'package:opennetiq_mobile/features/privacy/application/consent_controller
 import 'package:opennetiq_mobile/features/privacy/presentation/privacy_summary.dart';
 import 'package:opennetiq_mobile/features/recording/application/recording_controller.dart';
 import 'package:opennetiq_mobile/features/signal_monitor/application/signal_monitor_providers.dart';
+import 'package:opennetiq_mobile/features/voice_sms/presentation/voice_sms_screen.dart';
 
 /// Privacy settings (issue #24): consent switch, data deletion, ledger.
 class PrivacyScreen extends ConsumerWidget {
@@ -39,6 +40,8 @@ class PrivacyScreen extends ConsumerWidget {
                   : (on) => _setMeasurement(ref, granted: on),
             ),
           ),
+          const SizedBox(height: 8),
+          const VoiceSmsConsentCard(),
           const SizedBox(height: 8),
           const Card(
             child: Padding(
@@ -100,7 +103,7 @@ class PrivacyScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Delete all measurement data?'),
         content: const Text(
-          'All sessions, samples, cell observations, speed and latency '
+          'All sessions, samples, cell observations and test '
           'results are removed from this phone. Exported files you already '
           'shared are not affected. This cannot be undone.',
         ),

@@ -5,7 +5,7 @@ import 'package:opennetiq_mobile/data/local/app_database.dart';
 
 import '../../fixtures/db_fixtures.dart';
 
-/// Column definitions parsed from database/mobile/schema_v2.sql.
+/// Column definitions parsed from database/mobile/schema_v3.sql.
 class DdlColumn {
   DdlColumn(this.name, this.type, {required this.notNull});
 
@@ -47,13 +47,13 @@ Map<String, List<DdlColumn>> parseDdl(String sql) {
 void main() {
   late AppDatabase db;
   final ddl = parseDdl(
-    File('../../database/mobile/schema_v2.sql').readAsStringSync(),
+    File('../../database/mobile/schema_v3.sql').readAsStringSync(),
   );
 
   setUp(() => db = memoryDatabase());
   tearDown(() => db.close());
 
-  test('reference DDL defines the 9 schema v2 tables', () {
+  test('reference DDL defines the 10 schema v3 tables', () {
     expect(ddl.keys.toSet(), {
       'devices',
       'sessions',
@@ -62,6 +62,7 @@ void main() {
       'speed_tests',
       'latency_tests',
       'qoe_tests',
+      'voice_sms_tests',
       'app_settings',
       'consent_log',
     });

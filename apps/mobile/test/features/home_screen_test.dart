@@ -65,6 +65,9 @@ void main() {
   });
 
   testWidgets('no banner while idle', (tester) async {
+    tester.view.physicalSize = const Size(1080, 3600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [grantedConsentOverride],

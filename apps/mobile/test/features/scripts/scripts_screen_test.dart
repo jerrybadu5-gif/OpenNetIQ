@@ -132,7 +132,7 @@ void main() {
     );
     await tester.tap(find.text('Add step'));
     await tester.pumpAndSettle();
-    expect(find.text('Voice call (coming)'), findsOneWidget);
+    expect(find.text('Voice call'), findsOneWidget);
     await tester.tap(find.text('Speed test').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add step'));

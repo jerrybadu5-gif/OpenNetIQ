@@ -64,6 +64,14 @@ class FileSessionExporter implements SessionExporter {
         data.qoeTests.length,
       );
     }
+    if (formats.contains(ExportFormat.csv) && data.voiceSmsTests.isNotEmpty) {
+      await write(
+        '${base}_voice_sms.csv',
+        csvMime,
+        builder.voiceSmsCsv(),
+        data.voiceSmsTests.length,
+      );
+    }
     if (formats.contains(ExportFormat.geojson)) {
       final located = data.samples
           .where((s) => s.lat != null && s.lon != null)
@@ -76,7 +84,8 @@ class FileSessionExporter implements SessionExporter {
             located +
             data.speedTests.length +
             data.latencyTests.length +
-            data.qoeTests.length,
+            data.qoeTests.length +
+            data.voiceSmsTests.length,
       );
     }
     if (formats.contains(ExportFormat.kml)) {

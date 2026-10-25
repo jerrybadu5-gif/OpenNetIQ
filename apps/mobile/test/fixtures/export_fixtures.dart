@@ -147,6 +147,27 @@ Future<void> seedExportSession(AppDatabase db, {String name = 'POM Route 1'}) =>
             ),
           );
       await db
+          .into(db.voiceSmsTests)
+          .insert(
+            VoiceSmsTestsCompanion.insert(
+              testId: 'vs-1',
+              sessionId: const Value(exportSessionId),
+              measurementId: const Value('m1'),
+              timestamp: '2026-10-13T01:00:02.000Z',
+              kind: 'call',
+              methodologyVersion: '1.0.0',
+              label: 'Line A',
+              targetMasked: '••67',
+              status: 'ok',
+              outcome: 'completed',
+              windowS: const Value(45),
+              setupMs: const Value(5200),
+              connectedS: const Value(39),
+              dropped: const Value(false),
+              createdAt: ts,
+            ),
+          );
+      await db
           .into(db.latencyTests)
           .insert(
             LatencyTestsCompanion.insert(

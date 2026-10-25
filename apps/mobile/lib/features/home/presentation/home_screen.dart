@@ -44,11 +44,18 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(AppRoutes.qoe),
           ),
           ListTile(
+            leading: const Icon(Icons.call),
+            title: const Text('Voice and SMS tests'),
+            subtitle: const Text(
+              'Call setup, drops and SMS delivery to your test numbers',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.voiceSms),
+          ),
+          ListTile(
             leading: const Icon(Icons.playlist_play),
             title: const Text('Test scripts'),
-            subtitle: const Text(
-              'Repeat speed and latency tests automatically, e.g. on a drive',
-            ),
+            subtitle: const Text('Repeat tests automatically, e.g. on a drive'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.scripts),
           ),

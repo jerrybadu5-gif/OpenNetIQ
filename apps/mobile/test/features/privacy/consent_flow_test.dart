@@ -231,16 +231,16 @@ void main() {
     }
 
     SwitchListTile toggle(WidgetTester tester) =>
-        tester.widget<SwitchListTile>(find.byType(SwitchListTile));
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile).first);
 
     testWidgets('switch withdraws and grants consent', (tester) async {
       await pump(tester);
       expect(toggle(tester).value, isTrue);
-      await tester.tap(find.byType(SwitchListTile));
+      await tester.tap(find.byType(SwitchListTile).first);
       await tester.pumpAndSettle();
       expect(consent.decisions, [false]);
       expect(toggle(tester).value, isFalse);
-      await tester.tap(find.byType(SwitchListTile));
+      await tester.tap(find.byType(SwitchListTile).first);
       await tester.pumpAndSettle();
       expect(consent.decisions, [false, true]);
       expect(radio.requestCount, 1);

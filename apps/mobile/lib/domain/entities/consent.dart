@@ -6,7 +6,10 @@ enum ConsentScope {
   location('location'),
   radio('radio'),
   backgroundLocation('background_location'),
-  upload('upload');
+  upload('upload'),
+
+  /// Voice call and SMS tests (policy 1.1, issue #30). Separate opt-in.
+  voiceSms('voice_sms');
 
   const ConsentScope(this.wireValue);
 
@@ -70,6 +73,9 @@ class ConsentStatus {
   /// The user answered the onboarding question for this policy version.
   bool get decided =>
       ConsentScope.measurement.every((s) => decisions.containsKey(s));
+
+  /// Voice call and SMS tests allowed (separate opt-in, default off).
+  bool get voiceSms => decisions[ConsentScope.voiceSms] ?? false;
 
   /// Radio and location measurement allowed.
   bool get measurement =>
