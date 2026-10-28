@@ -72,7 +72,7 @@ dependencies {
     // Speed-test engine (issue #19, ADR-007). Apache-2.0.
     implementation("com.squareup.okhttp3:okhttp:5.4.0")
     // Video QoE test (issue #29). Apache-2.0.
-    implementation("commons-net:commons-net:3.11.1")
+    implementation("commons-net:commons-net:3.13.0")
     implementation("androidx.media3:media3-exoplayer:1.11.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.11.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.11.1")
