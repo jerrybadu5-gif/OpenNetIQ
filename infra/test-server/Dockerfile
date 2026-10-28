@@ -1,6 +1,6 @@
 # OpenNetIQ speed-test server (issue #20, ADR-007): LibreSpeed-compatible
 # endpoints for method http-mc-1.0, served by nginx (sendfile, non-root).
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine@sha256:884e0b7f42f303641b0f4e78755aea647521dca0b89ca3be7992ad78b5c07434
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e
 
 LABEL org.opencontainers.image.title="opennetiq-speedtest-server" \
       org.opencontainers.image.description="LibreSpeed-compatible HTTP speed-test endpoints for OpenNetIQ (method http-mc-1.0)" \
